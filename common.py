@@ -1,4 +1,5 @@
 from os import path
+from os import getcwd
 import sys
 
 def projectdir(ctlg, usetempdir=False):
@@ -11,5 +12,5 @@ def projectdir(ctlg, usetempdir=False):
     return dirPath
 
 def full_path(path_to_file):
-    return path.join(path.dirname(__file__), path_to_file)
+    return path.join(getcwd(), path_to_file)
 

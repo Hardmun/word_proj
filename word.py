@@ -1,2 +1,5 @@
 from common import full_path
-# from docx import
+import docx
+
+wrd = docx.Document(full_path("files/1.docx"))
+fdf=0
