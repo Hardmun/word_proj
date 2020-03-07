@@ -4,25 +4,27 @@ import os
 # import xmltodict
 # import magicdate
 from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
+from watchdog.events import FileSystemEventHandler
 
 # from .models import Media
 
 
-class MyHandler(PatternMatchingEventHandler):
-    patterns=["*.xml"]
-
-
-    def process(self, event):
-        """
-        event.event_type
-            'modified' | 'created' | 'moved' | 'deleted'
-        event.is_directory
-            True | False
-        event.src_path
-            path/to/observed/file
-        """
-        sdf=0
+class MyHandler(FileSystemEventHandler):
+    def on_any_event(self, event):
+        asdf=0
+    # patterns=["*.xml"]
+    #
+    #
+    # def process(self, event):
+    #     """
+    #     event.event_type
+    #         'modified' | 'created' | 'moved' | 'deleted'
+    #     event.is_directory
+    #         True | False
+    #     event.src_path
+    #         path/to/observed/file
+    #     """
+    #     sdf=0
         # with open(event.src_path, 'r') as xml_source:
         #     pass
             # xml_source.write()
@@ -41,15 +43,15 @@ class MyHandler(PatternMatchingEventHandler):
             # )
             # media.save()
 
-    def on_modified(self, event):
-        self.process(event)
+    # def on_modified(self, event):
+    #     self.process(event)
+    #
+    # def on_created(self, event):
+    #     self.process(event)
 
-    def on_created(self, event):
-        self.process(event)
-
-    def on_any_event(self, event):
-        print(str(event))
-        self.process(event)
+    # def on_any_event(self, event):
+    #     print(str(event))
+    #     self.process(event)
 
 
 
