@@ -3,9 +3,10 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import os
 import time
-
+import logging
 from configparser import ConfigParser
 
+"""settings.ini"""
 config = ConfigParser()
 configList = config.read("settings.ini")
 projectDir = os.getcwd()
@@ -16,6 +17,37 @@ if configList.__len__() == 0:
     with open("settings.ini", "w") as configfile:
         config.write(configfile)
 
+"""Writing the logs"""
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter("%(asctime)s:%(message)s")
+
+"""if directory Logs doesn't exist"""
+logDir = os.path.abspath("Logs")
+if not os.path.isdir(logDir):
+    os.mkdir(logDir)
+
+infoHandler = logging.FileHandler(os.path.join("Logs", "info.log"))
+infoHandler.setFormatter(formatter)
+
+errorHandler = logging.FileHandler(os.path.join("Logs", "errors.log"))
+errorHandler.setLevel(logging.raiseExceptions)
+errorHandler.setFormatter(formatter)
+
+logger.addHandler(infoHandler)
+logger.addHandler(errorHandler)
+
+def logDecorator(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except:
+            logger.exception(f"An error has been occurred in function {func.__name__}")
+
+    return wrapper
+
+# @logDecorator
 def splitWordFile(filePath):
     word = Document(filePath)
     rows = word.tables[0].rows
@@ -64,7 +96,9 @@ class IniHandler(FileSystemEventHandler):
         if event.src_path.find("settings.ini") != -1:
             config.read("settings.ini")
             observer = self.obs
-            observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
+            newPath = config.get("Paths", "Path")
+            observer.schedule(WordHandler(), path=os.path.normpath(newPath))
+            logger.info(f'The directory has been changed to {newPath}')
 
 if __name__ == '__main__':
     """directory for observing"""
