@@ -51,7 +51,6 @@ def logDecorator(func):
 def splitWordFile(filePath):
     word = Document(filePath)
     rows = word.tables[0].rows
-    # rows[13].delete()
 
     tbl = word.tables[0]._tbl
     tr = rows[13]._tr
@@ -75,6 +74,19 @@ def splitWordFile(filePath):
 #         doc.Close()
 #         wrd.Quit()
 
+
+def docToDocx(filePath):
+    import pythoncom
+    from win32com import client
+    pythoncom.CoInitialize()
+    """checking microsoft word was installed"""
+    try:
+        wrd = client.Dispatch("Word1.Application")
+    except:
+        logger.exception("The Word application hasn't been installed!")
+        return False
+    asdf = 0
+
 class WordHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         """path to file"""
@@ -83,7 +95,7 @@ class WordHandler(FileSystemEventHandler):
         for file in os.listdir(fileDir):
             """converting *.doc into *.docx"""
             if file.endswith(".doc"):
-                asdf = 0
+                fileConverted = docToDocx(os.path.normpath(os.path.join(fileDir, file)))
             elif file.endswith(".docx"):
                 splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
 
