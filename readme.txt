@@ -1,0 +1,1 @@
+pyinstaller --onefile --log-level=DEBUG --icon=word.ico wordsplit.py

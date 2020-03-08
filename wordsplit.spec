@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['wordsplit.py'],
-             pathex=['D:\\My Documents\\python\\word_proj'],
+             pathex=['D:\\My documents\\Python\\word_proj'],
              binaries=[],
              datas=[],
              hiddenimports=[],

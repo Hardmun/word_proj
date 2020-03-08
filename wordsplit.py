@@ -43,15 +43,6 @@ def splitWordFile(filePath):
 #         doc.Close()
 #         wrd.Quit()
 
-# def projectdir(ctlg, usetempdir=False):
-#     """if executable file -  have to change the default path"""
-#     if getattr(sys, 'frozen', False) and usetempdir:
-#         exe_path = path.dirname(sys.executable)
-#         dirPath = path.join(getattr(sys, "_MEIPASS", exe_path), ctlg)
-#     else:
-#         dirPath = ctlg
-#     return dirPath
-
 class WordHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         """path to file"""
@@ -64,15 +55,35 @@ class WordHandler(FileSystemEventHandler):
             elif file.endswith(".docx"):
                 splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
 
+class IniHandler(FileSystemEventHandler):
+    def __init__(self):
+        super().__init__()
+        self.obs = None
+
+    def on_modified(self, event):
+        if event.src_path.find("settings.ini") != -1:
+            config.read("settings.ini")
+            observer = self.obs
+            observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
+
 if __name__ == '__main__':
+    """directory for observing"""
     observer = Observer()
     observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
     observer.start()
+    """if settings.ini was changed"""
+    observerINI = Observer()
+    IniHandler = IniHandler()
+    IniHandler.obs = observer
+    observerINI.schedule(IniHandler, path=projectDir)
+    observerINI.start()
 
     try:
         while True:
             time.sleep(10)
     except KeyboardInterrupt:
         observer.stop()
+        observerINI.stop()
 
     observer.join()
+    observerINI.join()
