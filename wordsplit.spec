@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['wordapp.py'],
+a = Analysis(['wordsplit.py'],
              pathex=['D:\\My Documents\\python\\word_proj'],
              binaries=[],
              datas=[],
@@ -23,11 +23,11 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='wordapp',
+          name='wordsplit',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=False )
+          console=True , icon='word.ico')

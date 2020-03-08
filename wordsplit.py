@@ -4,8 +4,17 @@ from watchdog.events import FileSystemEventHandler
 import os
 import time
 
-# def getpath(folder=''):
-#     return os.path.join(os.getcwd(), folder)
+from configparser import ConfigParser
+
+config = ConfigParser()
+configList = config.read("settings.ini")
+projectDir = os.getcwd()
+
+if configList.__len__() == 0:
+    config["Paths"] = {"Path": projectDir}
+
+    with open("settings.ini", "w") as configfile:
+        config.write(configfile)
 
 def splitWordFile(filePath):
     word = Document(filePath)
@@ -23,8 +32,6 @@ def splitWordFile(filePath):
     #     if not cell.text.strip() == "":
     #         print(cell.text)
     word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
-
-# splitWordFile()
 
 # for fl in os.listdir(os.getcwd()):
 #     if fl.endswith('.doc'):
@@ -49,16 +56,17 @@ class WordHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         """path to file"""
         filePath = event.src_path
-        for file in os.listdir(filePath):
+        fileDir = os.path.dirname(filePath)
+        for file in os.listdir(fileDir):
             """converting *.doc into *.docx"""
             if file.endswith(".doc"):
                 asdf = 0
             elif file.endswith(".docx"):
-                splitWordFile(os.path.normpath(os.path.join(filePath, file)))
+                splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
 
 if __name__ == '__main__':
     observer = Observer()
-    observer.schedule(WordHandler(), path=os.path.join("d:/"))
+    observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
     observer.start()
 
     try:
