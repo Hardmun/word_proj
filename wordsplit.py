@@ -2,6 +2,7 @@ from docx import Document
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import os
+from shutil import rmtree as shutil_rmtree
 import time
 import logging
 from configparser import ConfigParser
@@ -53,12 +54,33 @@ def logDecorator(func):
 
 # @logDecorator
 def splitWordFile(filePath):
-    word = Document(filePath)
-    rows = word.tables[0].rows
+    """refreshing the directory"""
+    """if directory Logs doesn't exist"""
+    fileDir = os.path.dirname(filePath)
+    splitDir = os.path.join(fileDir, os.path.splitext(filePath)[0])
+    if os.path.isdir(splitDir):
+        for file in os.listdir(splitDir):
+            fileToDetete = os.path.join(splitDir, file)
+            try:
+                if os.path.isdir(fileToDetete):
+                    shutil_rmtree(fileToDetete)
+                else:
+                    os.unlink(fileToDetete)
+            except BaseException as errMsg:
+                loggerError.exception(f"An error has been occurred deleting the file of the dir: {fileToDetete}")
+                messageFile([f"Файл или каталог {fileToDetete} занят другим приложением. Закройте открытые файлы.",
+                             str(errMsg)], fileDir)
+                return False
+    else:
+        os.mkdir(splitDir)
 
-    tbl = word.tables[0]._tbl
-    tr = rows[13]._tr
-    tbl.remove(tr)
+    #
+    # word = Document(filePath)
+    # rows = word.tables[0].rows
+    #
+    # tbl = word.tables[0]._tbl
+    # tr = rows[13]._tr
+    # tbl.remove(tr)
     # for row in rows:
     #     pass
     #
@@ -66,7 +88,8 @@ def splitWordFile(filePath):
     # for cell in cells:
     #     if not cell.text.strip() == "":
     #         print(cell.text)
-    word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
+    # word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
+    return False
 
 @logDecorator
 def messageFile(txtList, msgDir):
@@ -118,13 +141,17 @@ class WordHandler(FileSystemEventHandler):
                 if os.path.exists(msgPath):
                     os.unlink(msgPath)
 
+            splitCompleted = False
             if file.endswith(".doc"):
                 newFile = docToDocx(os.path.normpath(os.path.join(fileDir, file)))
                 if newFile:
                     loggerInfo.info(f"The file {file} was successfully converted to {newFile}")
-                    splitWordFile(newFile)
+                    splitCompleted = splitWordFile(newFile)
             elif file.endswith(".docx"):
-                splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
+                splitCompleted = splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
+
+            if splitCompleted:
+                loggerInfo.info("The WORD file has been split successfully.")
 
 class IniHandler(FileSystemEventHandler):
     def __init__(self):
