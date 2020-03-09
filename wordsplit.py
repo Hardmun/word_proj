@@ -49,20 +49,22 @@ def logDecorator(func):
 
 # @logDecorator
 def splitWordFile(filePath):
-    word = Document(filePath)
-    rows = word.tables[0].rows
+    pass
+    # word = Document(filePath)
+    # rows = word.tables[0].rows
+    #
+    # tbl = word.tables[0]._tbl
+    # tr = rows[13]._tr
+    # tbl.remove(tr)
+    #
+    # for row in rows:
+    #     pass
 
-    tbl = word.tables[0]._tbl
-    tr = rows[13]._tr
-    tbl.remove(tr)
-
-    for row in rows:
-        pass
     # cells = word.tables[0]._cells
     # for cell in cells:
     #     if not cell.text.strip() == "":
     #         print(cell.text)
-    word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
+    # word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
 
 # for fl in os.listdir(os.getcwd()):
 #     if fl.endswith('.doc'):
@@ -79,16 +81,28 @@ def docToDocx(filePath):
     import pythoncom
     from win32com import client
     pythoncom.CoInitialize()
+    isConverted = True
     """checking microsoft word was installed"""
     try:
-        wrd = client.Dispatch("Word1.Application")
+        wrd = client.Dispatch("Word.Application")
     except:
         logger.exception("The Word application hasn't been installed!")
         return False
-    asdf = 0
+
+    wrd.visible = 0
+    try:
+        doc = wrd.Documents.Open(filePath)
+        doc.SaveAs(os.path.join(os.path.dirname(filePath), os.path.splitext(filePath)[0]), FileFormat=12)
+        doc.Close()
+    except:
+        logger.exception("The Word application hasn't been opened or saved!")
+        isConverted = False
+
+    wrd.Quit()
+    return isConverted
 
 class WordHandler(FileSystemEventHandler):
-    def on_any_event(self, event):
+    def on_created(self, event):
         """path to file"""
         filePath = event.src_path
         fileDir = os.path.dirname(filePath)
