@@ -52,24 +52,23 @@ def logDecorator(func):
     return wrapper
 
 # @logDecorator
-# def splitWordFile(filePath):
-#     pass
-# word = Document(filePath)
-# rows = word.tables[0].rows
-#
-# tbl = word.tables[0]._tbl
-# tr = rows[13]._tr
-# tbl.remove(tr)
-#
-# for row in rows:
-#     pass
+def splitWordFile(filePath):
+    word = Document(filePath)
+    rows = word.tables[0].rows
 
-# cells = word.tables[0]._cells
-# for cell in cells:
-#     if not cell.text.strip() == "":
-#         print(cell.text)
-# word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
+    tbl = word.tables[0]._tbl
+    tr = rows[13]._tr
+    tbl.remove(tr)
+    # for row in rows:
+    #     pass
+    #
+    # cells = word.tables[0]._cells
+    # for cell in cells:
+    #     if not cell.text.strip() == "":
+    #         print(cell.text)
+    word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
 
+@logDecorator
 def messageFile(txtList, msgDir):
     with open(os.path.join(msgDir, "message.txt"), "w", encoding="utf-8") as file:
         file.write("\n".join(txtList))
@@ -118,10 +117,12 @@ class WordHandler(FileSystemEventHandler):
                 msgPath = os.path.join(fileDir, "message.txt")
                 if os.path.exists(msgPath):
                     os.unlink(msgPath)
+
             if file.endswith(".doc"):
                 newFile = docToDocx(os.path.normpath(os.path.join(fileDir, file)))
                 if newFile:
                     loggerInfo.info(f"The file {file} was successfully converted to {newFile}")
+                    splitWordFile(newFile)
             elif file.endswith(".docx"):
                 splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
 
