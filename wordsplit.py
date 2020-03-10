@@ -67,7 +67,7 @@ def splitWordFile(filePath):
                 else:
                     os.unlink(fileToDetete)
             except BaseException as errMsg:
-                loggerError.exception(f"An error has been occurred deleting the file of the dir: {fileToDetete}")
+                loggerError.exception(f"An error has been occurred deleting the file or the dir: {fileToDetete}")
                 messageFile([f"Файл или каталог {fileToDetete} занят другим приложением. Закройте открытые файлы.",
                              str(errMsg)], fileDir)
                 return False
