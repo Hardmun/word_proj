@@ -6,7 +6,6 @@ from shutil import rmtree as shutil_rmtree
 import time
 import logging
 from configparser import ConfigParser
-
 """win32 service"""
 import servicemanager
 import socket
@@ -19,7 +18,6 @@ from concurrent.futures import ProcessPoolExecutor
 """global path"""
 projectDir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(
     os.path.abspath(__file__))
-# projectDir = os.getcwd()
 
 """settings.ini"""
 config = ConfigParser()
