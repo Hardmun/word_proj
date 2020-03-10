@@ -7,23 +7,10 @@ import time
 import logging
 from configparser import ConfigParser
 
-"""win32 service"""
-import servicemanager
-import socket
-import sys
-import win32event
-import win32service
-import win32serviceutil
-from concurrent.futures import ProcessPoolExecutor
-
-"""global path"""
-projectDir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(
-    os.path.abspath(__file__))
-# projectDir = os.getcwd()
-
 """settings.ini"""
 config = ConfigParser()
-configList = config.read(os.path.join(projectDir, "settings.ini"))
+configList = config.read("settings.ini")
+projectDir = os.getcwd()
 
 if configList.__len__() == 0:
     config["Paths"] = {"Path": projectDir}
@@ -41,15 +28,15 @@ loggerInfo.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s:%(message)s")
 
 """if directory Logs doesn't exist"""
-logDir = os.path.join(projectDir, "Logs")
+logDir = os.path.abspath("Logs")
 if not os.path.isdir(logDir):
     os.mkdir(logDir)
 
-infoHandler = logging.FileHandler(os.path.join(logDir, "info.log"))
+infoHandler = logging.FileHandler(os.path.join("Logs", "info.log"))
 infoHandler.setLevel(logging.INFO)
 infoHandler.setFormatter(formatter)
 
-errorHandler = logging.FileHandler(os.path.join(logDir, "errors.log"))
+errorHandler = logging.FileHandler(os.path.join("Logs", "errors.log"))
 errorHandler.setLevel(logging.raiseExceptions)
 errorHandler.setFormatter(formatter)
 
@@ -173,61 +160,30 @@ class IniHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         if event.src_path.find("settings.ini") != -1:
-            config.read(os.path.join(projectDir, "settings.ini"))
+            config.read("settings.ini")
             obsr = self.obs
             newPath = config.get("Paths", "Path")
             obsr.schedule(WordHandler(), path=os.path.normpath(newPath))
             loggerInfo.info(f'The directory has been changed to {newPath}')
 
-class winService(win32serviceutil.ServiceFramework):
-    _svc_name_ = "wordsplit"
-    _svc_display_name_ = "Word split"
-    _svc_description_ = "Word split application"
-
-    def __init__(self, args):
-        win32serviceutil.ServiceFramework.__init__(self, args)
-        self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-        self.run_flag = True
-        socket.setdefaulttimeout(60)
-
-    def SvcStop(self):
-        self.run_flag = False
-        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        win32event.SetEvent(self.hWaitStop)
-
-    def SvcDoRun(self):
-        rc = None
-        while rc != win32event.WAIT_OBJECT_0:
-            self.main()
-            rc = win32event.WaitForSingleObject(self.hWaitStop, 5000)
-
-    def main(self):
-        observer = Observer()
-        observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
-        observer.start()
-        """if settings.ini was changed"""
-        observerINI = Observer()
-        IniHandlerVrb = IniHandler()
-        IniHandlerVrb.obs = observer
-        observerINI.schedule(IniHandlerVrb, path=projectDir)
-        observerINI.start()
-        try:
-            while True:
-                if self.run_flag is False:
-                    observer.stop()
-                    observerINI.stop()
-                    raise
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
-            observerINI.stop()
-        observer.join()
-        observerINI.join()
-
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(winService)
-        servicemanager.StartServiceCtrlDispatcher()
-    else:
-        win32serviceutil.HandleCommandLine(winService)
+    """directory for observing"""
+    observer = Observer()
+    observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
+    observer.start()
+    """if settings.ini was changed"""
+    observerINI = Observer()
+    IniHandler = IniHandler()
+    IniHandler.obs = observer
+    observerINI.schedule(IniHandler, path=projectDir)
+    observerINI.start()
+
+    # try:
+    #     while True:
+    #         time.sleep(10)
+    # except KeyboardInterrupt:
+    #     observer.stop()
+    #     observerINI.stop()
+    #
+    observer.join()
+    observerINI.join()
