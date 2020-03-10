@@ -4,7 +4,7 @@
 #define MyAppName "Word split"
 #define MyAppVersion "1.0"
 #define MyAppPublisher "Nikulin V."
-#define MyAppExeName "wordsplit.exe"
+#define MyAppExeName "Wordsplit.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -19,7 +19,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
-OutputBaseFilename=mysetup
+OutputBaseFilename=Wordsplit
 SetupIconFile=C:\install\word_parser\word.ico
 Compression=lzma
 SolidCompression=yes
