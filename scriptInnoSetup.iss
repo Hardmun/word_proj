@@ -60,7 +60,7 @@ var
 procedure InitializeWizard;
 begin
   OtherInputDirPage :=
-    CreateInputDirPage(wpSelectDir, 'Select WORD directory to analyze', '', '', False, '');
+    CreateInputDirPage(wpSelectDir, 'Select the WORD directory to analyze', '', '', False, '');
   OtherInputDirPage.Add('');
 end;
 
