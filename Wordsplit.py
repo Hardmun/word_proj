@@ -177,6 +177,29 @@ class IniHandler(FileSystemEventHandler):
             obsr.schedule(WordHandler(), path=os.path.normpath(newPath))
             loggerInfo.info(f'The directory has been changed to {newPath}')
 
+def obsDirectory(self=None):
+    observer = Observer()
+    observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
+    observer.start()
+    """if settings.ini was changed"""
+    observerINI = Observer()
+    IniHandlerVrb = IniHandler()
+    IniHandlerVrb.obs = observer
+    observerINI.schedule(IniHandlerVrb, path=projectDir)
+    observerINI.start()
+    try:
+        while True:
+            if self is not None and self.run_flag is False:
+                observer.stop()
+                observerINI.stop()
+                raise
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+        observerINI.stop()
+    observer.join()
+    observerINI.join()
+
 class winService(win32serviceutil.ServiceFramework):
     _svc_name_ = "Wordsplit"
     _svc_display_name_ = "Word split"
@@ -200,27 +223,7 @@ class winService(win32serviceutil.ServiceFramework):
             rc = win32event.WaitForSingleObject(self.hWaitStop, 5000)
 
     def main(self):
-        observer = Observer()
-        observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
-        observer.start()
-        """if settings.ini was changed"""
-        observerINI = Observer()
-        IniHandlerVrb = IniHandler()
-        IniHandlerVrb.obs = observer
-        observerINI.schedule(IniHandlerVrb, path=projectDir)
-        observerINI.start()
-        try:
-            while True:
-                if self.run_flag is False:
-                    observer.stop()
-                    observerINI.stop()
-                    raise
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
-            observerINI.stop()
-        observer.join()
-        observerINI.join()
+        obsDirectory(self)
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
