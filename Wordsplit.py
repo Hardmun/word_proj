@@ -13,7 +13,6 @@ import sys
 import win32event
 import win32service
 import win32serviceutil
-from concurrent.futures import ProcessPoolExecutor
 
 """global path"""
 projectDir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(
@@ -63,11 +62,24 @@ def logDecorator(func):
 
     return wrapper
 
+def getMappingTable(fileDir):
+    # with pd_ExcelFile(os.path.join(fileDir, "mapping.xlsx")) as file_xls:
+    #     for curr_sheet in file_xls.sheet_names:
+    #         sheet_df = file_xls.parse(curr_sheet, index=True).fillna('')
+    #         break
+    # return sheet_df
+    return 1
+
+# if __name__ == '__main__':
+#     df = getMappingTable(r"C:\install\word_parser\folder")
+
 # @logDecorator
 def splitWordFile(filePath):
     """refreshing the directory
     if directory Logs doesn't exist"""
     fileDir = os.path.dirname(filePath)
+    """getting mapping table"""
+    df = getMappingTable(fileDir)
     splitDir = os.path.join(fileDir, os.path.splitext(filePath)[0])
     if os.path.isdir(splitDir):
         for file in os.listdir(splitDir):
@@ -224,6 +236,8 @@ class winService(win32serviceutil.ServiceFramework):
 
     def main(self):
         obsDirectory(self)
+
+# obsDirectory()
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:

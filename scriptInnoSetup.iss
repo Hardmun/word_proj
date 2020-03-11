@@ -42,7 +42,7 @@ FileName: "{app}\settings.ini"; Section: "Paths"; Key: "path"; String: "{code:Ge
 Name: "{app}"; Flags: uninsalwaysuninstall
 
 [run]
-Filename: {sys}\sc.exe; Parameters: "create Wordsplit start=auto binPath= ""{app}\wordsplit.exe"" displayname=""Word split""" ; Flags: runhidden
+Filename: {sys}\sc.exe; Parameters: "create Wordsplit start=auto binPath= ""{app}\Wordsplit.exe"" displayname=""Word split""" ; Flags: runhidden
 Filename: {sys}\sc.exe; Parameters: "description Wordsplit ""Word split application""" ; Flags: runhidden
 Filename: {sys}\sc.exe; Parameters: "start Wordsplit" ; Flags: runhidden
 
