@@ -178,7 +178,7 @@ class IniHandler(FileSystemEventHandler):
             loggerInfo.info(f'The directory has been changed to {newPath}')
 
 class winService(win32serviceutil.ServiceFramework):
-    _svc_name_ = "wordsplit"
+    _svc_name_ = "Wordsplit"
     _svc_display_name_ = "Word split"
     _svc_description_ = "Word split application"
 
