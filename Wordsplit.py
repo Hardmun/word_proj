@@ -65,8 +65,8 @@ def logDecorator(func):
 
 # @logDecorator
 def splitWordFile(filePath):
-    """refreshing the directory"""
-    """if directory Logs doesn't exist"""
+    """refreshing the directory
+    if directory Logs doesn't exist"""
     fileDir = os.path.dirname(filePath)
     splitDir = os.path.join(fileDir, os.path.splitext(filePath)[0])
     if os.path.isdir(splitDir):

@@ -20,7 +20,7 @@ DisableProgramGroupPage=yes
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
 OutputBaseFilename=Wordsplit
-SetupIconFile=C:\install\word_parser\word.ico
+SetupIconFile=C:\install\wordsplit\word.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -29,7 +29,7 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "C:\install\word_parser\Wordsplit.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\install\wordsplit\dist\Wordsplit.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
