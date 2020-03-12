@@ -8,6 +8,7 @@ import time
 import logging
 from configparser import ConfigParser
 from copy import deepcopy
+
 """win32 service"""
 import servicemanager
 import socket
@@ -64,7 +65,7 @@ def logDecorator(func):
 
     return wrapper
 
-class valueTable():
+class valueTable:
     def __init__(self, table):
         self.table = table
 
@@ -92,6 +93,15 @@ def getMappingTable(fileDir):
     vt = valueTable(sheet)
     vt.structure(mapping=[1, 2])
     return vt
+
+class tree:
+    def __init__(self, data = None):
+        self.data = None
+        self.right = tree()
+
+    def apend(self):
+        pass
+
 
 # @logDecorator
 def splitWordFile(filePath):
@@ -139,10 +149,11 @@ def splitWordFile(filePath):
         elif (row._index >= startrow) and (row.cells[2].text == row.cells[3].text == row.cells[8].text
                                            == row.cells[9].text == row.cells[11].text):
             """searching a header if exists"""
-            if rowheader is None:
-                rowheader = paragraphsCopy.add_row()
-            rowheader._element.getparent().replace(rowheader._element, paragraphs.rows[row._index]._element)
-            rowheader = paragraphs.rows[row._index]
+
+            # if rowheader is None:
+            #     rowheader = paragraphsCopy.add_row()
+            # rowheader._element.getparent().replace(rowheader._element, paragraphs.rows[row._index]._element)
+            # rowheader = paragraphs.rows[row._index]
         # else:
         #     if rowisnone is None:
         #         newrow = paragraphsCopy.add_row()
@@ -162,10 +173,6 @@ def splitWordFile(filePath):
         #             paragraphsCopy._tbl.remove(delrow)
         #         break
 
-
-
-
-
     # f = paragraphsCopy.add_row()
     # lastrow = paragraphs.rows[14]._element
     #
@@ -175,10 +182,7 @@ def splitWordFile(filePath):
 
     word.tables[0]._element.getparent().replace(word.tables[0]._element, paragraphsCopy._element)
 
-
-
     # paragraphs = deepcopy(word.tables[0])
-
 
     # rows = paragraphs.rows
     # tr = rows[20]._tr
