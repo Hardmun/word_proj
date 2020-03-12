@@ -1,4 +1,5 @@
 from docx import Document
+from xlrd import open_workbook
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import os
@@ -6,6 +7,7 @@ from shutil import rmtree as shutil_rmtree
 import time
 import logging
 from configparser import ConfigParser
+
 """win32 service"""
 import servicemanager
 import socket
@@ -62,16 +64,31 @@ def logDecorator(func):
 
     return wrapper
 
+class valueTable():
+    def __init__(self, table, mapping=None):
+        self.table = table
+
+    def json(self, mapping=None):
+        if isinstance(mapping, range):
+            # if self.table
+            return 1
+
 def getMappingTable(fileDir):
-    # with pd_ExcelFile(os.path.join(fileDir, "mapping.xlsx")) as file_xls:
-    #     for curr_sheet in file_xls.sheet_names:
-    #         sheet_df = file_xls.parse(curr_sheet, index=True).fillna('')
-    #         break
-    # return sheet_df
+    xls = open_workbook(os.path.join(fileDir, "mapping.xlsx"))
+    sheet = xls.sheet_by_index(0)
+
+    l = []
+    l.append({"one": 1})
+    l.append({"two": 2})
+    l.append({"two": 3})
+    f = valueTable(sheet)
+    vls = f.json(mapping=range(1,2))
+
+    sdf = 0
+
     return 1
 
-# if __name__ == '__main__':
-#     df = getMappingTable(r"C:\install\word_parser\folder")
+df = getMappingTable(config.get("Paths", "Path"))
 
 # @logDecorator
 def splitWordFile(filePath):
@@ -239,10 +256,10 @@ class winService(win32serviceutil.ServiceFramework):
 
 # obsDirectory()
 
-if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(winService)
-        servicemanager.StartServiceCtrlDispatcher()
-    else:
-        win32serviceutil.HandleCommandLine(winService)
+# if __name__ == '__main__':
+#     if len(sys.argv) == 1:
+#         servicemanager.Initialize()
+#         servicemanager.PrepareToHostSingle(winService)
+#         servicemanager.StartServiceCtrlDispatcher()
+#     else:
+#         win32serviceutil.HandleCommandLine(winService)
