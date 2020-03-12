@@ -65,13 +65,22 @@ def logDecorator(func):
     return wrapper
 
 class valueTable():
-    def __init__(self, table, mapping=None):
+    def __init__(self, table):
         self.table = table
 
-    def json(self, mapping=None):
-        if isinstance(mapping, range):
-            # if self.table
-            return 1
+    def __getitem__(self, item):
+        return 1
+
+    def structure(self, mapping=None):
+        if isinstance(mapping, list):
+            if str(self.table).find("xlrd.sheet.Sheet object") != -1:
+                sheet = self.table
+                dict_list = []
+                for row_index in range(1, sheet.nrows):
+                    d = {sheet.cell(row_index, mapping[0]).value: sheet.cell(row_index, mapping[1]).value}
+                    dict_list.append(d)
+                self.table = dict_list
+                return dict_list
 
 def getMappingTable(fileDir):
     xls = open_workbook(os.path.join(fileDir, "mapping.xlsx"))
@@ -82,8 +91,7 @@ def getMappingTable(fileDir):
     l.append({"two": 2})
     l.append({"two": 3})
     f = valueTable(sheet)
-    vls = f.json(mapping=range(1,2))
-
+    vls = f.structure(mapping=[1,2])
     sdf = 0
 
     return 1
