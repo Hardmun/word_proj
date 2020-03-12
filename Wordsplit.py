@@ -94,14 +94,26 @@ def getMappingTable(fileDir):
     vt.structure(mapping=[1, 2])
     return vt
 
-class tree:
-    def __init__(self, data = None):
-        self.data = None
-        self.right = tree()
+class magictree:
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.level = 0 if parent is None else parent.level + 1
+        self.attr = []
+        self.rows = []
 
-    def apend(self):
-        pass
+    def add(self, value):
+        tr = magictree(self)
+        tr.attr.append(value)
+        self.rows.append(tr)
+        return tr
 
+    def printtree(self):
+        def printrows(rows):
+            for i in rows:
+                print("{}{}".format(i.level * "\t", i.attr))
+                printrows(i.rows)
+
+        printrows(self.rows)
 
 # @logDecorator
 def splitWordFile(filePath):
@@ -132,9 +144,11 @@ def splitWordFile(filePath):
     paragraphsCopy = deepcopy(paragraphs)
 
     rowtodelete = []
-    startrow = 10
+    startrow = 0
     rowheader = None
     rowisnone = None
+    tree = magictree()
+    hierarchy = None
     for row in paragraphs.rows:
         print(f"index {row._index}  name {row.cells[0].text} controll {paragraphs.rows[row._index]}")
 
@@ -146,21 +160,23 @@ def splitWordFile(filePath):
             """deleting rows"""
             for delrow in rowtodelete:
                 paragraphsCopy._tbl.remove(delrow)
-        elif (row._index >= startrow) and (row.cells[2].text == row.cells[3].text == row.cells[8].text
+        elif (startrow != 0) and (row._index >= startrow) and (row.cells[2].text == row.cells[3].text == row.cells[8].text
                                            == row.cells[9].text == row.cells[11].text):
             """searching a header if exists"""
-
+            hierarchy = tree.add(paragraphs.rows[row._index]._element)
             # if rowheader is None:
             #     rowheader = paragraphsCopy.add_row()
             # rowheader._element.getparent().replace(rowheader._element, paragraphs.rows[row._index]._element)
             # rowheader = paragraphs.rows[row._index]
-        # else:
+        elif (startrow != 0) and (row._index >= startrow):
+            if hierarchy is not None:
+                hierarchy.add(paragraphs.rows[row._index]._element)
+            else:
+                tree.add(paragraphs.rows[row._index]._element)
         #     if rowisnone is None:
         #         newrow = paragraphsCopy.add_row()
         #     newrow._element.getparent().replace(newrow._element, paragraphs.rows[row._index]._element)
         #     newrow = paragraphs.rows[row._index]
-
-
 
         # if row.cells[2].text and row.cells[3].text and row.cells[8].text and row.cells[9].text \
         #         and row.cells[11].text and row._index > 10:
