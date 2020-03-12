@@ -7,7 +7,7 @@ from shutil import rmtree as shutil_rmtree
 import time
 import logging
 from configparser import ConfigParser
-
+from copy import deepcopy
 """win32 service"""
 import servicemanager
 import socket
@@ -69,7 +69,11 @@ class valueTable():
         self.table = table
 
     def __getitem__(self, item):
-        return 1
+        if isinstance(item, int):
+            return self.table[item]
+        else:
+            fltr = list(filter(lambda x: next(iter(x)) == item, self.table))
+            return [next(iter(itm.values())) for itm in fltr]
 
     def structure(self, mapping=None):
         if isinstance(mapping, list):
@@ -85,18 +89,9 @@ class valueTable():
 def getMappingTable(fileDir):
     xls = open_workbook(os.path.join(fileDir, "mapping.xlsx"))
     sheet = xls.sheet_by_index(0)
-
-    l = []
-    l.append({"one": 1})
-    l.append({"two": 2})
-    l.append({"two": 3})
-    f = valueTable(sheet)
-    vls = f.structure(mapping=[1,2])
-    sdf = 0
-
-    return 1
-
-df = getMappingTable(config.get("Paths", "Path"))
+    vt = valueTable(sheet)
+    vt.structure(mapping=[1, 2])
+    return vt
 
 # @logDecorator
 def splitWordFile(filePath):
@@ -104,7 +99,7 @@ def splitWordFile(filePath):
     if directory Logs doesn't exist"""
     fileDir = os.path.dirname(filePath)
     """getting mapping table"""
-    df = getMappingTable(fileDir)
+    valueTable = getMappingTable(fileDir)
     splitDir = os.path.join(fileDir, os.path.splitext(filePath)[0])
     if os.path.isdir(splitDir):
         for file in os.listdir(splitDir):
@@ -122,10 +117,79 @@ def splitWordFile(filePath):
     else:
         os.mkdir(splitDir)
 
+    word = Document(filePath)
+    paragraphs = word.tables[0]
+    paragraphsCopy = deepcopy(paragraphs)
+
+    rowtodelete = []
+    startrow = 10
+    rowheader = None
+    rowisnone = None
+    for row in paragraphs.rows:
+        print(f"index {row._index}  name {row.cells[0].text} controll {paragraphs.rows[row._index]}")
+
+        if row.cells[0].text.find("Наименование работы") != -1:
+            startrow = row._index + 1
+            """clearing the paragrapg table"""
+            for inx in range(startrow, len(paragraphs.rows)):
+                rowtodelete.append(paragraphsCopy.rows[inx]._tr)
+            """deleting rows"""
+            for delrow in rowtodelete:
+                paragraphsCopy._tbl.remove(delrow)
+        elif (row._index >= startrow) and (row.cells[2].text == row.cells[3].text == row.cells[8].text
+                                           == row.cells[9].text == row.cells[11].text):
+            """searching a header if exists"""
+            if rowheader is None:
+                rowheader = paragraphsCopy.add_row()
+            rowheader._element.getparent().replace(rowheader._element, paragraphs.rows[row._index]._element)
+            rowheader = paragraphs.rows[row._index]
+        # else:
+        #     if rowisnone is None:
+        #         newrow = paragraphsCopy.add_row()
+        #     newrow._element.getparent().replace(newrow._element, paragraphs.rows[row._index]._element)
+        #     newrow = paragraphs.rows[row._index]
+
+
+
+        # if row.cells[2].text and row.cells[3].text and row.cells[8].text and row.cells[9].text \
+        #         and row.cells[11].text and row._index > 10:
+        #     if row.cells[2].text == row.cells[3].text == row.cells[8].text == row.cells[9].text == row.cells[11].text:
+        #         """clearing the paragrapg table"""
+        #         for inx in range(row._index, len(paragraphs.rows)):
+        #             rowtodelete.append(paragraphsCopy.rows[inx]._tr)
+        #         """deleting rows"""
+        #         for delrow in rowtodelete:
+        #             paragraphsCopy._tbl.remove(delrow)
+        #         break
+
+
+
+
+
+    # f = paragraphsCopy.add_row()
+    # lastrow = paragraphs.rows[14]._element
     #
-    # word = Document(filePath)
+    # f._element.getparent().replace(f._element, paragraphs.rows[14]._element)
+    #
+    # lastrow.getparent().replace(lastrow, paragraphs.rows[18]._element)
+
+    word.tables[0]._element.getparent().replace(word.tables[0]._element, paragraphsCopy._element)
+
+
+
+    # paragraphs = deepcopy(word.tables[0])
+
+
+    # rows = paragraphs.rows
+    # tr = rows[20]._tr
+    # paragraphs._tbl.remove(tr)
+    #
+    # word.tables[0]._element.getparent().replace(word.tables[0]._element, wordTable._element)
+
+    # word.tables[0]._element = wordTable._element
+
+    # word.tables[0]._tbl = wordTable._tbl
     # rows = word.tables[0].rows
-    #
     # tbl = word.tables[0]._tbl
     # tr = rows[13]._tr
     # tbl.remove(tr)
@@ -136,7 +200,7 @@ def splitWordFile(filePath):
     # for cell in cells:
     #     if not cell.text.strip() == "":
     #         print(cell.text)
-    # word.save(os.path.join(os.path.dirname(filePath), "mod.docx"))
+    word.save(os.path.join(splitDir, "mod.docx"))
     return False
 
 @logDecorator
@@ -262,7 +326,7 @@ class winService(win32serviceutil.ServiceFramework):
     def main(self):
         obsDirectory(self)
 
-# obsDirectory()
+obsDirectory()
 
 # if __name__ == '__main__':
 #     if len(sys.argv) == 1:
