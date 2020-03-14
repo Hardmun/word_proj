@@ -171,20 +171,11 @@ def splitWordFile(filePath):
                 == row.cells[9].text == row.cells[11].text):
             """searching a header if exists"""
             hierarchy = tree.add(paragraphs.rows[row._index])
-            # if rowheader is None:
-            #     rowheader = paragraphsCopy.add_row()
-            # rowheader._element.getparent().replace(rowheader._element, paragraphs.rows[row._index]._element)
-            # rowheader = paragraphs.rows[row._index]
         elif (startrow != 0) and (row._index >= startrow):
             if hierarchy is not None:
                 hierarchy.add(paragraphs.rows[row._index])
             else:
                 tree.add(paragraphs.rows[row._index])
-
-        #     if rowisnone is None:
-        #         newrow = paragraphsCopy.add_row()
-        #     newrow._element.getparent().replace(newrow._element, paragraphs.rows[row._index]._element)
-        #     newrow = paragraphs.rows[row._index]
 
     def outputitems(itemrows):
         global newrow
@@ -246,29 +237,6 @@ def splitWordFile(filePath):
             outputitems(tree.rows)
             break
 
-    # paragraphs = deepcopy(word.tables[0])
-
-    # rows = paragraphs.rows
-    # tr = rows[20]._tr
-    # paragraphs._tbl.remove(tr)
-    #
-    # word.tables[0]._element.getparent().replace(word.tables[0]._element, wordTable._element)
-
-    # word.tables[0]._element = wordTable._element
-
-    # word.tables[0]._tbl = wordTable._tbl
-    # rows = word.tables[0].rows
-    # tbl = word.tables[0]._tbl
-    # tr = rows[13]._tr
-    # tbl.remove(tr)
-    # for row in rows:
-    #     pass
-    #
-    # cells = word.tables[0]._cells
-    # for cell in cells:
-    #     if not cell.text.strip() == "":
-    #         print(cell.text)
-    # word.save(os.path.join(splitDir, "mod.docx"))
     return False
 
 @logDecorator
