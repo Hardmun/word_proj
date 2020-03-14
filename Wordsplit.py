@@ -88,7 +88,12 @@ class valueTable:
                 return dict_list
 
 def getMappingTable(fileDir):
-    xls = open_workbook(os.path.join(fileDir, "mapping.xlsx"))
+    pathtofile = os.path.join(fileDir, "mapping.xlsx")
+    if not os.path.exists(pathtofile):
+        loggerError.error(f"File {pathtofile} not found! Copy a mapping file to the directory!")
+        messageFile(["Файл сопоставления оборудования с протоколом не найден!", pathtofile], fileDir)
+        return {}
+    xls = open_workbook(pathtofile)
     sheet = xls.sheet_by_index(0)
     vt = valueTable(sheet)
     vt.structure(mapping=[1, 2])
@@ -151,8 +156,6 @@ def splitWordFile(filePath):
     tree = magictree()
     hierarchy = None
     for row in paragraphs.rows:
-        print(f"index {row._index}  name {row.cells[0].text} controll {paragraphs.rows[row._index]}")
-
         if row.cells[0].text.find("Наименование работы") != -1:
             startrow = row._index + 1
             """clearing the paragrapg table"""
@@ -288,11 +291,10 @@ class WordHandler(FileSystemEventHandler):
         """path to file"""
         file = event.src_path
         fileDir = os.path.dirname(file)
-        # for file in os.listdir(fileDir):
         """converting *.doc into *.docx"""
         if file.find("~$") == -1:
             """deleting message.txt"""
-            if os.path.basename(file) != "message.txt":
+            if file.endswith(".docx") or file.endswith(".doc"):
                 msgPath = os.path.join(fileDir, "message.txt")
                 if os.path.exists(msgPath):
                     os.unlink(msgPath)
