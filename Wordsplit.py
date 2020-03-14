@@ -4,7 +4,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import os
 from shutil import rmtree as shutil_rmtree
-import time
+from time import sleep as time_sleep
 import logging
 from configparser import ConfigParser
 from copy import deepcopy
@@ -92,7 +92,7 @@ def getMappingTable(fileDir):
     if not os.path.exists(pathtofile):
         loggerError.error(f"File {pathtofile} not found! Copy a mapping file to the directory!")
         messageFile(["Файл сопоставления оборудования с протоколом не найден!", pathtofile], fileDir)
-        return {}
+        return None
     xls = open_workbook(pathtofile)
     sheet = xls.sheet_by_index(0)
     vt = valueTable(sheet)
@@ -126,7 +126,7 @@ def splitWordFile(filePath):
     if directory Logs doesn't exist"""
     fileDir = os.path.dirname(filePath)
     """getting mapping table"""
-    valueTable = getMappingTable(fileDir)
+    mappingTable = getMappingTable(fileDir)
     splitDir = os.path.join(fileDir, os.path.splitext(filePath)[0])
     if os.path.isdir(splitDir):
         for file in os.listdir(splitDir):
@@ -147,6 +147,8 @@ def splitWordFile(filePath):
     word = Document(filePath)
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
+    """we need this variable to replace the table in the main file"""
+    equipmentCopy = deepcopy(word.tables[1])
 
     rowtodelete = []
     startrow = 0
@@ -189,8 +191,47 @@ def splitWordFile(filePath):
         for rowlower in itemrows:
             if newrow is None:
                 newrow = paragraphsCopy.add_row()
+            """name for new file(the protocol number"""
+            wordname = rowlower.attr[0].cells[11].text
+            """paragraph name"""
+            paragraphname = rowlower.attr[0].cells[0].text
             newrow._element.getparent().replace(newrow._element, rowlower.attr[0]._element)
             newrow = rowlower.attr[0]
+
+            """if a paragraph isn't found in equipment, deleting the equipment row
+            creating a copy of the equipment to edit"""
+            if mappingTable is not None:
+                equipmenttoedit = deepcopy(equipmentCopy)
+                equipmentList = mappingTable[paragraphname]
+                equiptodelete = []
+                """need to define do we need a header in the table"""
+                equipheader = None
+                equipmentrowsexist = False
+                for equipmnt in equipmenttoedit.rows:
+                    if equipmnt._index > 1:
+                        """this is header"""
+                        if equipmnt.cells[0].text == equipmnt.cells[1].text:
+                            if equipheader is not None and equipmentrowsexist != True:
+                                equiptodelete.append(equipheader)
+                            equipmentrowsexist = False
+                            equipheader = equipmnt._tr
+                        else:
+                            if not equipmnt.cells[0].text in equipmentList:
+                                equiptodelete.append(equipmnt._tr)
+                            elif equipmentrowsexist == False:
+                                equipmentrowsexist = True
+
+                """need to check the end of a table"""
+                if equipheader is not None and equipmentrowsexist != True:
+                    equiptodelete.append(equipheader)
+
+                for equipdelete in equiptodelete:
+                    equipmenttoedit._tbl.remove(equipdelete)
+
+                word.tables[1]._element.getparent().replace(word.tables[1]._element, equipmenttoedit._element)
+
+            word.tables[0]._element.getparent().replace(word.tables[0]._element, paragraphsCopy._element)
+            word.save(os.path.join(splitDir, f"{wordname}.docx"))
 
     for rowtree in tree.rows:
         if len(rowtree.rows) > 0:
@@ -204,26 +245,6 @@ def splitWordFile(filePath):
         else:
             outputitems(tree.rows)
             break
-
-        # if row.cells[2].text and row.cells[3].text and row.cells[8].text and row.cells[9].text \
-        #         and row.cells[11].text and row._index > 10:
-        #     if row.cells[2].text == row.cells[3].text == row.cells[8].text == row.cells[9].text == row.cells[11].text:
-        #         """clearing the paragrapg table"""
-        #         for inx in range(row._index, len(paragraphs.rows)):
-        #             rowtodelete.append(paragraphsCopy.rows[inx]._tr)
-        #         """deleting rows"""
-        #         for delrow in rowtodelete:
-        #             paragraphsCopy._tbl.remove(delrow)
-        #         break
-
-    # f = paragraphsCopy.add_row()
-    # lastrow = paragraphs.rows[14]._element
-    #
-    # f._element.getparent().replace(f._element, paragraphs.rows[14]._element)
-    #
-    # lastrow.getparent().replace(lastrow, paragraphs.rows[18]._element)
-
-    word.tables[0]._element.getparent().replace(word.tables[0]._element, paragraphsCopy._element)
 
     # paragraphs = deepcopy(word.tables[0])
 
@@ -247,7 +268,7 @@ def splitWordFile(filePath):
     # for cell in cells:
     #     if not cell.text.strip() == "":
     #         print(cell.text)
-    word.save(os.path.join(splitDir, "mod.docx"))
+    # word.save(os.path.join(splitDir, "mod.docx"))
     return False
 
 @logDecorator
@@ -340,7 +361,7 @@ def obsDirectory(self=None):
                 observer.stop()
                 observerINI.stop()
                 raise
-            time.sleep(1)
+            time_sleep(10)
     except KeyboardInterrupt:
         observer.stop()
         observerINI.stop()
