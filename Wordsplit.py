@@ -402,7 +402,6 @@ class winService(win32serviceutil.ServiceFramework):
     def main(self):
         obsDirectory(self)
 
-# obsDirectory()
 if __name__ == '__main__':
     if len(sys.argv) == 1:
         servicemanager.Initialize()
