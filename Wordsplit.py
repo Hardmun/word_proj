@@ -307,7 +307,6 @@ def docToDocx(filePath):
     wrd.Quit()
     return isConverted
 
-
 class WordHandler(FileSystemEventHandler):
     def on_created(self, event):
         """path to file"""
