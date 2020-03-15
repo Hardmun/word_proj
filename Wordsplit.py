@@ -60,8 +60,8 @@ def logDecorator(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except BaseException as e:
-            loggerError.exception(f"An error has been occurred in function {func.__name__}", exc_info=e)
+        except BaseException as errMsg:
+            loggerError.exception(f"An error has been occurred in function {func.__name__}", exc_info=errMsg)
 
     return wrapper
 
