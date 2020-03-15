@@ -14,7 +14,8 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-DefaultDirName=C:\Program Files\Word split
+DefaultDirName= {commonappdata}\Word split
+;DefaultDirName= C:\Program Files\Word split
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
@@ -24,6 +25,7 @@ SetupIconFile=C:\install\wordsplit\word.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+;PrivilegesRequired=admin
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -33,7 +35,8 @@ Source: "C:\install\wordsplit\dist\Wordsplit.exe"; DestDir: "{app}"; Flags: igno
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+;Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{commonstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 
 [INI]
 FileName: "{app}\settings.ini"; Section: "DEFAULT"; Key: "AllowSendErrors"; String: "{code:GetCheckError}"
@@ -43,13 +46,18 @@ FileName: "{app}\settings.ini"; Section: "DEFAULT"; Key: "path"; String: "{code:
 Name: "{app}"; Flags: uninsalwaysuninstall
 
 [run]
-Filename: {sys}\sc.exe; Parameters: "create Wordsplit start=auto binPath= ""{app}\Wordsplit.exe"" displayname=""Word split""" ; Flags: runhidden
-Filename: {sys}\sc.exe; Parameters: "description Wordsplit ""Word split application""" ; Flags: runhidden
-Filename: {sys}\sc.exe; Parameters: "start Wordsplit" ; Flags: runhidden
+Filename: {app}\{#MyAppExeName}; Description: {cm:LaunchProgram,{#MyAppExeName}}; Flags: nowait postinstall skipifsilent
+;Filename: {app}\{#MyAppExeName}; Flags: nowait postinstall skipifsilent
+;Filename: {sys}\sc.exe; Parameters: "create Wordsplit start=auto binPath= ""{app}\Wordsplit.exe"" displayname=""Word split""" ; Flags: runhidden
+;Filename: {sys}\sc.exe; Parameters: "description Wordsplit ""Word split application""" ; Flags: runhidden
+;Filename: {sys}\sc.exe; Parameters: "start Wordsplit" ; Flags: runhidden
 
-[UninstallRun]
-Filename: {sys}\sc.exe; Parameters: "stop Wordsplit" ; Flags: runhidden
-Filename: {sys}\sc.exe; Parameters: "delete Wordsplit" ; Flags: runhidden
+;[UninstallRun]
+;Filename: {sys}\sc.exe; Parameters: "stop Wordsplit" ; Flags: runhidden
+;Filename: {sys}\sc.exe; Parameters: "delete Wordsplit" ; Flags: runhidden
+
+[InstallDelete]
+Type: files; Name: "{commonstartup}\{#MyAppName}.lnk"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\unnecessary_files"
