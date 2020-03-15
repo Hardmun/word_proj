@@ -32,8 +32,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "C:\install\wordsplit\dist\Wordsplit.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-[Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+;[Icons]
+;Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 
 [INI]
 FileName: "{app}\settings.ini"; Section: "DEFAULT"; Key: "AllowSendErrors"; String: "{code:GetCheckError}"
