@@ -26,7 +26,7 @@ config = ConfigParser()
 configList = config.read(os.path.join(projectDir, "settings.ini"))
 
 if configList.__len__() == 0:
-    config["Paths"] = {"Path": projectDir}
+    config["DEFAULT"] = {"Path": projectDir}
 
     with open("settings.ini", "w") as configfile:
         config.write(configfile)
@@ -309,13 +309,13 @@ class IniHandler(FileSystemEventHandler):
         if event.src_path.find("settings.ini") != -1:
             config.read(os.path.join(projectDir, "settings.ini"))
             obsr = self.obs
-            newPath = config.get("Paths", "Path")
+            newPath = config.get("DEFAULT", "Path")
             obsr.schedule(WordHandler(), path=os.path.normpath(newPath))
             loggerInfo.info(f'The directory has been changed to {newPath}')
 
 def obsDirectory(self=None):
     observer = Observer()
-    observer.schedule(WordHandler(), path=os.path.normpath(config.get("Paths", "Path")))
+    observer.schedule(WordHandler(), path=os.path.normpath(config.get("DEFAULT", "Path")))
     observer.start()
     """if settings.ini was changed"""
     observerINI = Observer()
@@ -361,12 +361,12 @@ class winService(win32serviceutil.ServiceFramework):
     def main(self):
         obsDirectory(self)
 
-obsDirectory()
+# obsDirectory()
 
-# if __name__ == '__main__':
-#     if len(sys.argv) == 1:
-#         servicemanager.Initialize()
-#         servicemanager.PrepareToHostSingle(winService)
-#         servicemanager.StartServiceCtrlDispatcher()
-#     else:
-#         win32serviceutil.HandleCommandLine(winService)
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        servicemanager.Initialize()
+        servicemanager.PrepareToHostSingle(winService)
+        servicemanager.StartServiceCtrlDispatcher()
+    else:
+        win32serviceutil.HandleCommandLine(winService)

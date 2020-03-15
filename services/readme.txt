@@ -11,3 +11,6 @@ This specific problem was solved by copying this file - pywintypes36.dll
 From -> Python36\Lib\site-packages\pywin32_system32
 To -> Python36\Lib\site-packages\win32
 
+2) to install xlrd need to use two options:
+    python3 -m pip install --user xlrd
+    python3 -m pip install xlrd
