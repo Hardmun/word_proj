@@ -144,7 +144,21 @@ def splitWordFile(filePath):
     else:
         os.mkdir(splitDir)
 
-    word = Document(filePath)
+    try:
+        word = Document(filePath)
+    except BaseException:
+        """trying to wait untill OS define the file"""
+        time_sleep(1)
+        word = Document(filePath)
+    except BaseException:
+        """trying to wait untill OS define the file"""
+        time_sleep(3)
+        word = Document(filePath)
+    except BaseException as errMsg:
+        loggerError.exception(f"An error occured while reading file: word = Document({filePath})")
+        messageFile(["Ошибка чтения WORD.", str(errMsg), filePath], fileDir)
+        return False
+
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
     """we need this variable to replace the table in the main file"""
@@ -237,7 +251,7 @@ def splitWordFile(filePath):
             outputitems(tree.rows)
             break
 
-    return False
+    return True
 
 @logDecorator
 def messageFile(txtList, msgDir):

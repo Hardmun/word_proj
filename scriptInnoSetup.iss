@@ -3,7 +3,7 @@
 
 #define MyAppName "Word split"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "Nikulin V."
+#define MyAppPublisher "Nikulin Vitaly"
 #define MyAppExeName "Wordsplit.exe"
 
 [Setup]
@@ -36,7 +36,8 @@ Source: "C:\install\wordsplit\dist\Wordsplit.exe"; DestDir: "{app}"; Flags: igno
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 
 [INI]
-FileName: "{app}\settings.ini"; Section: "Paths"; Key: "path"; String: "{code:GetWordDir}"
+FileName: "{app}\settings.ini"; Section: "DEFAULT"; Key: "AllowSendErrors"; String: "{code:GetCheckError}"
+FileName: "{app}\settings.ini"; Section: "DEFAULT"; Key: "path"; String: "{code:GetWordDir}"
 
 [Dirs]
 Name: "{app}"; Flags: uninsalwaysuninstall
@@ -56,17 +57,38 @@ Type: filesandordirs; Name: "{app}\unnecessary_files"
 [Code]
 var
   OtherInputDirPage: TInputDirWizardPage;
+  PageCheckBox: TInputOptionWizardPage;
 
 procedure InitializeWizard;
 begin
   OtherInputDirPage :=
     CreateInputDirPage(wpSelectDir, 'Select the WORD directory to analyze', '', '', False, '');
   OtherInputDirPage.Add('');
+  OtherInputDirPage.Values[0] := 'C:\123'
+
+  PageCheckBox :=
+    CreateInputOptionPage(wpWelcome,
+  'License Information', 'Are you a registered user?',
+  'If you are a registered user, please check the box below, then click Next.',
+  False, False);
+  PageCheckBox.Add('Allow the programm to send errors to developers.');
+  PageCheckBox.Values[0] := True;
 end;
 
 function GetWordDir(Param: String): String;
 begin
   Result := OtherInputDirPage.Values[0];
+end;
+
+function GetCheckError(Param: String): String;
+begin
+  if PageCheckBox.Values[0] then begin
+    Result := '1';
+  end
+  else begin
+    Result := '0';
+  end; 
+  
 end;
 
 /////////////////////////////////////////////////////////////////////
