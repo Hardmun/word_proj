@@ -184,6 +184,7 @@ def splitWordFile(filePath):
     rowtodelete = []
     startrow = 0
     rowheader = None
+    global newrow
     newrow = None
     tree = magictree()
     hierarchy = None
@@ -207,17 +208,17 @@ def splitWordFile(filePath):
             else:
                 tree.add(paragraphs.rows[row._index])
 
-    def outputitems(itemrows, newrowLocal):
-        # global newrow
+    def outputitems(itemrows):
+        global newrow
         for rowlower in itemrows:
-            if newrowLocal is None:
-                newrowLocal = paragraphsCopy.add_row()
+            if newrow is None:
+                newrow = paragraphsCopy.add_row()
             """name for new file(the protocol number"""
             wordname = rowlower.attr[0].cells[11].text
             """paragraph name"""
             paragraphname = rowlower.attr[0].cells[0].text
-            newrowLocal._element.getparent().replace(newrowLocal._element, rowlower.attr[0]._element)
-            newrowLocal = rowlower.attr[0]
+            newrow._element.getparent().replace(newrow._element, rowlower.attr[0]._element)
+            newrow = rowlower.attr[0]
 
             """if a paragraph isn't found in equipment, deleting the equipment row
             creating a copy of the equipment to edit"""
@@ -262,9 +263,9 @@ def splitWordFile(filePath):
             rowheader._element.getparent().replace(rowheader._element, rowtree.attr[0]._element)
             rowheader = rowtree.attr[0]
             """items"""
-            outputitems(rowtree.rows, newrow)
+            outputitems(rowtree.rows)
         else:
-            outputitems(tree.rows, newrow)
+            outputitems(tree.rows)
             break
 
     return True
@@ -306,6 +307,7 @@ def docToDocx(filePath):
     wrd.Quit()
     return isConverted
 
+
 class WordHandler(FileSystemEventHandler):
     def on_created(self, event):
         """path to file"""
@@ -323,7 +325,8 @@ class WordHandler(FileSystemEventHandler):
             if file.endswith(".doc"):
                 newFile = docToDocx(os.path.normpath(os.path.join(fileDir, file)))
                 if newFile:
-                    loggerInfo.info(f"The file {file} was successfully converted to {newFile}")
+                    # loggerInfo.info(f"The file r'{os.path.basename(file)}' was successfully converted to "
+                    #                 f"{os.path.basename(newFile)}")
                     splitCompleted = splitWordFile(newFile)
             elif file.endswith(".docx"):
                 splitCompleted = splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
@@ -400,10 +403,12 @@ class winService(win32serviceutil.ServiceFramework):
     def main(self):
         obsDirectory(self)
 
+# obsDirectory()
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(winService)
-        servicemanager.StartServiceCtrlDispatcher()
-    else:
-        win32serviceutil.HandleCommandLine(winService)
+    obsDirectory()
+    # if len(sys.argv) == 1:
+    #     servicemanager.Initialize()
+    #     servicemanager.PrepareToHostSingle(winService)
+    #     servicemanager.StartServiceCtrlDispatcher()
+    # else:
+    #     win32serviceutil.HandleCommandLine(winService)
