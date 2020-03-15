@@ -64,15 +64,6 @@ loggerError.addHandler(errorHandler)
 loggerInfo.addHandler(infoHandler)
 loggerglobal.addHandler(globalHandler)
 
-def logDecorator(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except BaseException as errMsg:
-            loggerglobal.exception(f"An error has been occurred in function {func.__name__}", exc_info=errMsg)
-
-    return wrapper
-
 class valueTable:
     def __init__(self, table):
         self.table = table
@@ -95,19 +86,6 @@ class valueTable:
                 self.table = dict_list
                 return dict_list
 
-@logDecorator
-def getMappingTable(fileDir):
-    pathtofile = os.path.join(fileDir, "mapping.xlsx")
-    if not os.path.exists(pathtofile):
-        loggerError.error(f"File {pathtofile} not found! Copy a mapping file to the directory!")
-        messageFile(["Файл сопоставления оборудования с протоколом не найден!", pathtofile], fileDir)
-        return None
-    xls = open_workbook(pathtofile)
-    sheet = xls.sheet_by_index(0)
-    vt = valueTable(sheet)
-    vt.structure(mapping=[1, 2])
-    return vt
-
 class magictree:
     def __init__(self, parent=None):
         self.parent = parent
@@ -128,6 +106,36 @@ class magictree:
                 printrows(i.rows)
 
         printrows(self.rows)
+
+"""need an additional class for multiple exceptions"""
+
+class waitexception_1(BaseException):
+    pass
+
+class waitexception_3(BaseException):
+    pass
+
+def logDecorator(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BaseException as errMsg:
+            loggerglobal.exception(f"An error has been occurred in function {func.__name__}", exc_info=errMsg)
+
+    return wrapper
+
+@logDecorator
+def getMappingTable(fileDir):
+    pathtofile = os.path.join(fileDir, "mapping.xlsx")
+    if not os.path.exists(pathtofile):
+        loggerError.error(f"File {pathtofile} not found! Copy a mapping file to the directory!")
+        messageFile(["Файл сопоставления оборудования с протоколом не найден!", pathtofile], fileDir)
+        return None
+    xls = open_workbook(pathtofile)
+    sheet = xls.sheet_by_index(0)
+    vt = valueTable(sheet)
+    vt.structure(mapping=[1, 2])
+    return vt
 
 @logDecorator
 def splitWordFile(filePath):
@@ -155,16 +163,16 @@ def splitWordFile(filePath):
 
     try:
         word = Document(filePath)
-    except BaseException:
-        """trying to wait untill OS define the file"""
+    except waitexception_1:
+        """trying to wait until OS define the file"""
         time_sleep(1)
         word = Document(filePath)
-    except BaseException:
-        """trying to wait untill OS define the file"""
+    except waitexception_2:
+        """trying to wait until OS define the file"""
         time_sleep(3)
         word = Document(filePath)
     except BaseException as errMsg:
-        loggerError.exception(f"An error occured while reading file: word = Document({filePath})")
+        loggerError.exception(f"An error occurred while reading file: word = Document({filePath})")
         messageFile(["Ошибка чтения WORD.", str(errMsg), filePath], fileDir)
         return False
 
@@ -176,7 +184,6 @@ def splitWordFile(filePath):
     rowtodelete = []
     startrow = 0
     rowheader = None
-    global newrow
     newrow = None
     tree = magictree()
     hierarchy = None
@@ -200,17 +207,17 @@ def splitWordFile(filePath):
             else:
                 tree.add(paragraphs.rows[row._index])
 
-    def outputitems(itemrows):
-        global newrow
+    def outputitems(itemrows, newrowLocal):
+        # global newrow
         for rowlower in itemrows:
-            if newrow is None:
-                newrow = paragraphsCopy.add_row()
+            if newrowLocal is None:
+                newrowLocal = paragraphsCopy.add_row()
             """name for new file(the protocol number"""
             wordname = rowlower.attr[0].cells[11].text
             """paragraph name"""
             paragraphname = rowlower.attr[0].cells[0].text
-            newrow._element.getparent().replace(newrow._element, rowlower.attr[0]._element)
-            newrow = rowlower.attr[0]
+            newrowLocal._element.getparent().replace(newrowLocal._element, rowlower.attr[0]._element)
+            newrowLocal = rowlower.attr[0]
 
             """if a paragraph isn't found in equipment, deleting the equipment row
             creating a copy of the equipment to edit"""
@@ -225,18 +232,18 @@ def splitWordFile(filePath):
                     if equipmnt._index > 1:
                         """this is header"""
                         if equipmnt.cells[0].text == equipmnt.cells[1].text:
-                            if equipheader is not None and equipmentrowsexist != True:
+                            if equipheader is not None and equipmentrowsexist is not True:
                                 equiptodelete.append(equipheader)
                             equipmentrowsexist = False
                             equipheader = equipmnt._tr
                         else:
                             if not equipmnt.cells[0].text in equipmentList:
                                 equiptodelete.append(equipmnt._tr)
-                            elif equipmentrowsexist == False:
+                            elif equipmentrowsexist is False:
                                 equipmentrowsexist = True
 
                 """need to check the end of a table"""
-                if equipheader is not None and equipmentrowsexist != True:
+                if equipheader is not None and equipmentrowsexist is not True:
                     equiptodelete.append(equipheader)
 
                 for equipdelete in equiptodelete:
@@ -255,9 +262,9 @@ def splitWordFile(filePath):
             rowheader._element.getparent().replace(rowheader._element, rowtree.attr[0]._element)
             rowheader = rowtree.attr[0]
             """items"""
-            outputitems(rowtree.rows)
+            outputitems(rowtree.rows, newrow)
         else:
-            outputitems(tree.rows)
+            outputitems(tree.rows, newrow)
             break
 
     return True
@@ -340,11 +347,11 @@ class IniHandler(FileSystemEventHandler):
 def obsDirectory(self=None):
     observer = Observer()
     """if a observe directory doesn't exists, creating"""
-    obsDir = os.path.normpath(config.get("DEFAULT", "Path"));
+    obsDir = os.path.normpath(config.get("DEFAULT", "Path"))
     if not os.path.isdir(obsDir):
         try:
             os.mkdir(obsDir)
-        except BaseException as errMsg:
+        except waitexception_1:
             loggerError.exception(f"An error has been occurred creating the dir: {obsDir}")
             obsDir = os.path.normpath("c:/")
     observer.schedule(WordHandler(), path=obsDir)
@@ -392,8 +399,6 @@ class winService(win32serviceutil.ServiceFramework):
 
     def main(self):
         obsDirectory(self)
-
-# obsDirectory()
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
