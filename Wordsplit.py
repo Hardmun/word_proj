@@ -315,7 +315,15 @@ class IniHandler(FileSystemEventHandler):
 
 def obsDirectory(self=None):
     observer = Observer()
-    observer.schedule(WordHandler(), path=os.path.normpath(config.get("DEFAULT", "Path")))
+    """if a observe directory doesn't exists, creating"""
+    obsDir = os.path.normpath(config.get("DEFAULT", "Path"));
+    if not os.path.isdir(obsDir):
+        try:
+            os.mkdir(obsDir)
+        except BaseException as errMsg:
+            loggerError.exception(f"An error has been occurred creating the dir: {obsDir}")
+            obsDir = os.path.normpath("c:/")
+    observer.schedule(WordHandler(), path=obsDir)
     observer.start()
     """if settings.ini was changed"""
     observerINI = Observer()
