@@ -64,7 +64,7 @@ begin
   OtherInputDirPage :=
     CreateInputDirPage(wpSelectDir, 'Select the WORD directory to analyze', '', '', False, '');
   OtherInputDirPage.Add('');
-  OtherInputDirPage.Values[0] := 'C:\123'
+  OtherInputDirPage.Values[0] := ExpandConstant('{userdesktop}') + '\WordToSplit'
 
   PageCheckBox :=
     CreateInputOptionPage(wpWelcome,

@@ -35,6 +35,9 @@ if configList.__len__() == 0:
 loggerError = logging.getLogger("error")
 loggerError.setLevel(logging.ERROR)
 
+loggerglobal = logging.getLogger("global")
+loggerglobal.setLevel(logging.ERROR)
+
 loggerInfo = logging.getLogger("info")
 loggerInfo.setLevel(logging.INFO)
 
@@ -53,15 +56,20 @@ errorHandler = logging.FileHandler(os.path.join(logDir, "errors.log"))
 errorHandler.setLevel(logging.raiseExceptions)
 errorHandler.setFormatter(formatter)
 
+globalHandler = logging.FileHandler(os.path.join(logDir, "global.log"))
+globalHandler.setLevel(logging.raiseExceptions)
+globalHandler.setFormatter(formatter)
+
 loggerError.addHandler(errorHandler)
 loggerInfo.addHandler(infoHandler)
+loggerglobal.addHandler(globalHandler)
 
 def logDecorator(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except BaseException as errMsg:
-            loggerError.exception(f"An error has been occurred in function {func.__name__}", exc_info=errMsg)
+            loggerglobal.exception(f"An error has been occurred in function {func.__name__}", exc_info=errMsg)
 
     return wrapper
 
@@ -87,6 +95,7 @@ class valueTable:
                 self.table = dict_list
                 return dict_list
 
+@logDecorator
 def getMappingTable(fileDir):
     pathtofile = os.path.join(fileDir, "mapping.xlsx")
     if not os.path.exists(pathtofile):
@@ -120,7 +129,7 @@ class magictree:
 
         printrows(self.rows)
 
-# @logDecorator
+@logDecorator
 def splitWordFile(filePath):
     """refreshing the directory
     if directory Logs doesn't exist"""
@@ -258,6 +267,7 @@ def messageFile(txtList, msgDir):
     with open(os.path.join(msgDir, "message.txt"), "w", encoding="utf-8") as file:
         file.write("\n".join(txtList))
 
+@logDecorator
 def docToDocx(filePath):
     import pythoncom
     from win32com import client
