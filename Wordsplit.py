@@ -308,6 +308,7 @@ def docToDocx(filePath):
     return isConverted
 
 class WordHandler(FileSystemEventHandler):
+    @logDecorator
     def on_created(self, event):
         """path to file"""
         file = event.src_path
@@ -338,6 +339,7 @@ class IniHandler(FileSystemEventHandler):
         super().__init__()
         self.obs = None
 
+    @logDecorator
     def on_modified(self, event):
         if event.src_path.find("settings.ini") != -1:
             config.read(os.path.join(projectDir, "settings.ini"))
