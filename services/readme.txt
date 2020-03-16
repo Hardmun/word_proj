@@ -20,3 +20,5 @@ Click(Properties)->Identity Tab
 Then select interactive user instead of launching user. By setting this MSWordwill be executed with the rights
 of user that is currently logged on.
 
+4) for 32 version WORD console is C:\WINDOWS\SysWOW64\mmc comexp.msc /32
+
