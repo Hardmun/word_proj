@@ -405,10 +405,9 @@ class winService(win32serviceutil.ServiceFramework):
         obsDirectory(self)
 
 if __name__ == '__main__':
-    obsDirectory()
-    # if len(sys.argv) == 1:
-    #     servicemanager.Initialize()
-    #     servicemanager.PrepareToHostSingle(winService)
-    #     servicemanager.StartServiceCtrlDispatcher()
-    # else:
-    #     win32serviceutil.HandleCommandLine(winService)
+    if len(sys.argv) == 1:
+        servicemanager.Initialize()
+        servicemanager.PrepareToHostSingle(winService)
+        servicemanager.StartServiceCtrlDispatcher()
+    else:
+        win32serviceutil.HandleCommandLine(winService)
