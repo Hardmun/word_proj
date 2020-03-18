@@ -146,6 +146,23 @@ def mergecells(row):
             paragraphtodelete.getparent().remove(paragraphtodelete)
             paragraphtodelete._p = paragraphtodelete._element = None
 
+def deleteparagraph(paragraph):
+    p = paragraph._element
+    p.getparent().remove(p)
+    p._p = p._element = None
+
+def replaceparagraph(paragraph, text=''):
+    paragraph.runs.clear()
+    # inline = paragraphs.runs
+    # firstloop = True
+    # # Loop added to work with runs (strings with same style)
+    # for i in range(len(inline)):
+    #     if firstloop:
+    #         firstloop = False
+    #     else:
+    #         text = ""
+    #     inline[i].text = text
+
 def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
     if instantreplace:
         firstloop = True
@@ -210,6 +227,14 @@ def splitWordFile(filePath):
 
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
+    """deleting paragraphs"""
+    smallstyle = word.styles['Normal']
+    font = smallstyle.font
+    font.size = 88900
+    newparagraph = word.add_paragraph(style=smallstyle)
+    word.paragraphs[5]._element.getparent().replace(word.paragraphs[5]._element, newparagraph._element)
+    deleteparagraph(word.paragraphs[6])
+
     """replace name in header"""
     replacetext(paragraphsCopy.rows[1].cells[0].paragraphs, "сертификационных ", "")
     """we need this variable to replace the table in the main file"""
