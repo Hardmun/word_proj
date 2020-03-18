@@ -124,7 +124,7 @@ def logDecorator(func):
 
     return wrapper
 
-@logDecorator
+# @logDecorator
 def getMappingTable(fileDir):
     pathtofile = os.path.join(fileDir, "mapping.xlsx")
     if not os.path.exists(pathtofile):
@@ -137,7 +137,39 @@ def getMappingTable(fileDir):
     vt.structure(mapping=[1, 2])
     return vt
 
-@logDecorator
+def mergecells(row):
+    textToDelete = row.cells[13].text
+    mrg = row.cells[9].merge(row.cells[13])
+    for prg in mrg.paragraphs:
+        if prg.text.find(textToDelete) != -1:
+            paragraphtodelete = prg._element
+            paragraphtodelete.getparent().remove(paragraphtodelete)
+            paragraphtodelete._p = paragraphtodelete._element = None
+
+def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
+    if instantreplace:
+        firstloop = True
+        for prg in paragraphs:
+            inline = prg.runs
+            # Loop added to work with runs (strings with same style)
+            for i in range(len(inline)):
+                if firstloop:
+                    text = newstring
+                    firstloop = False
+                else:
+                    text = ""
+                inline[i].text = text
+    else:
+        for prg in paragraphs:
+            if prg.text.find(oldstring) != -1:
+                inline = prg.runs
+                # Loop added to work with runs (strings with same style)
+                for i in range(len(inline)):
+                    if oldstring in inline[i].text:
+                        text = inline[i].text.replace(oldstring, newstring)
+                        inline[i].text = text
+
+# @logDecorator
 def splitWordFile(filePath):
     """refreshing the directory
     if directory Logs doesn't exist"""
@@ -178,9 +210,10 @@ def splitWordFile(filePath):
 
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
+    """replace name in header"""
+    replacetext(paragraphsCopy.rows[1].cells[0].paragraphs, "сертификационных ", "")
     """we need this variable to replace the table in the main file"""
     equipmentCopy = deepcopy(word.tables[1])
-
     rowtodelete = []
     startrow = 0
     rowheader = None
@@ -190,6 +223,9 @@ def splitWordFile(filePath):
     hierarchy = None
     for row in paragraphs.rows:
         if row.cells[0].text.find("Наименование работы") != -1:
+            """merge header"""
+            mergecells(paragraphsCopy.rows[row._index])
+
             startrow = row._index + 1
             """clearing the paragrapg table"""
             for inx in range(startrow, len(paragraphs.rows)):
@@ -213,12 +249,18 @@ def splitWordFile(filePath):
         for rowlower in itemrows:
             if newrow is None:
                 newrow = paragraphsCopy.add_row()
+            currentrow = rowlower.attr[0]
             """name for new file(the protocol number"""
-            wordname = rowlower.attr[0].cells[11].text
+            wordname = currentrow.cells[11].text
+            """rename protocol string"""
+            replacetext(paragraphsCopy.rows[1].cells[6].paragraphs, newstring=currentrow.cells[11].text,
+                        instantreplace=True)
             """paragraph name"""
-            paragraphname = rowlower.attr[0].cells[0].text
-            newrow._element.getparent().replace(newrow._element, rowlower.attr[0]._element)
-            newrow = rowlower.attr[0]
+            paragraphname = currentrow.cells[0].text
+            """merge row"""
+            mergecells(currentrow)
+            newrow._element.getparent().replace(newrow._element, currentrow._element)
+            newrow = currentrow
 
             """if a paragraph isn't found in equipment, deleting the equipment row
             creating a copy of the equipment to edit"""
@@ -308,7 +350,7 @@ def docToDocx(filePath):
     return isConverted
 
 class WordHandler(FileSystemEventHandler):
-    @logDecorator
+    # @logDecorator
     def on_created(self, event):
         """path to file"""
         file = event.src_path
@@ -339,7 +381,7 @@ class IniHandler(FileSystemEventHandler):
         super().__init__()
         self.obs = None
 
-    @logDecorator
+    # @logDecorator
     def on_modified(self, event):
         if event.src_path.find("settings.ini") != -1:
             config.read(os.path.join(projectDir, "settings.ini"))
@@ -405,9 +447,10 @@ class winService(win32serviceutil.ServiceFramework):
         obsDirectory(self)
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(winService)
-        servicemanager.StartServiceCtrlDispatcher()
-    else:
-        win32serviceutil.HandleCommandLine(winService)
+    obsDirectory()
+    # if len(sys.argv) == 1:
+    #     servicemanager.Initialize()
+    #     servicemanager.PrepareToHostSingle(winService)
+    #     servicemanager.StartServiceCtrlDispatcher()
+    # else:
+    #     win32serviceutil.HandleCommandLine(winService)
