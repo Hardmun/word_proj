@@ -151,18 +151,6 @@ def deleteparagraph(paragraph):
     p.getparent().remove(p)
     p._p = p._element = None
 
-def replaceparagraph(paragraph, text=''):
-    paragraph.runs.clear()
-    # inline = paragraphs.runs
-    # firstloop = True
-    # # Loop added to work with runs (strings with same style)
-    # for i in range(len(inline)):
-    #     if firstloop:
-    #         firstloop = False
-    #     else:
-    #         text = ""
-    #     inline[i].text = text
-
 def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
     if instantreplace:
         firstloop = True
