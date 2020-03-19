@@ -137,20 +137,6 @@ def getMappingTable(fileDir):
     vt.structure(mapping=[1, 2])
     return vt
 
-def mergecells(row):
-    textToDelete = row.cells[13].text
-    mrg = row.cells[9].merge(row.cells[13])
-    for prg in mrg.paragraphs:
-        if prg.text.find(textToDelete) != -1:
-            paragraphtodelete = prg._element
-            paragraphtodelete.getparent().remove(paragraphtodelete)
-            paragraphtodelete._p = paragraphtodelete._element = None
-
-def deleteparagraph(paragraph):
-    p = paragraph._element
-    p.getparent().remove(p)
-    p._p = p._element = None
-
 def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
     if instantreplace:
         firstloop = True
@@ -173,6 +159,45 @@ def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
                     if oldstring in inline[i].text:
                         text = inline[i].text.replace(oldstring, newstring)
                         inline[i].text = text
+
+def mergecells(row):
+    textToDelete = row.cells[13].paragraphs
+    mrg = row.cells[9].merge(row.cells[13])
+    for prg in mrg.paragraphs:
+        for prg_tmp in textToDelete:
+            if prg.text.find(prg_tmp.text) != -1:
+                paragraphtodelete = prg._element
+                paragraphtodelete.getparent().remove(paragraphtodelete)
+                paragraphtodelete._p = paragraphtodelete._element = None
+
+def findparagraph(paragraphs, desc_list, rangeList=None):
+    if rangeList is None:
+        rangeList = range(0, len(word.paragraphs))
+
+    conclusionResult = None
+    for desc in desc_list:
+        for doc_prg in rangeList:
+            conclusion = paragraphs[doc_prg]
+            if conclusion.text.find(desc) != -1:
+                conclusionResult = conclusion
+
+    return conclusionResult
+
+def deleteparagraph(paragraph):
+    p = paragraph._element
+    p.getparent().remove(p)
+    p._p = p._element = None
+
+def replaceparagraph(paragraph, text=''):
+    firstloop = True
+    inline = paragraph.runs
+    # Loop added to work with runs (strings with same style)
+    for i in range(len(inline)):
+        if firstloop:
+            firstloop = False
+        else:
+            text = ""
+        inline[i].text = text
 
 # @logDecorator
 def splitWordFile(filePath):
@@ -197,7 +222,6 @@ def splitWordFile(filePath):
                 return False
     else:
         os.mkdir(splitDir)
-
     try:
         word = Document(filePath)
     except waitexception_1:
@@ -216,12 +240,23 @@ def splitWordFile(filePath):
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
     """deleting paragraphs"""
-    smallstyle = word.styles['Normal']
+
+    smallstyle = word.styles.add_style("small", word.styles["Normal"].type)
     font = smallstyle.font
     font.size = 88900
-    newparagraph = word.add_paragraph(style=smallstyle)
-    word.paragraphs[5]._element.getparent().replace(word.paragraphs[5]._element, newparagraph._element)
-    deleteparagraph(word.paragraphs[6])
+
+    p_1 = findparagraph(word.paragraphs, ["Результаты измерений параметров изделий"],
+                        range(4, len(word.paragraphs)))
+    if p_1 is not None:
+        newparagraph = word.add_paragraph(style=smallstyle)
+        p_1._element.getparent().replace(p_1._element, newparagraph._element)
+    p_2 = findparagraph(word.paragraphs, ["Данные протокола могут быть воспроизведены"],
+                        range(4, len(word.paragraphs)))
+    if p_1 is not None and p_2 is not None:
+        deleteparagraph(p_2)
+    elif p_1 is None and p_2 is not None:
+        newparagraph = word.add_paragraph(style=smallstyle)
+        p_2._element.getparent().replace(p_2._element, newparagraph._element)
 
     """replace name in header"""
     replacetext(paragraphsCopy.rows[1].cells[0].paragraphs, "сертификационных ", "")
@@ -232,13 +267,17 @@ def splitWordFile(filePath):
     rowheader = None
     global newrow
     newrow = None
+    secheaderrow = None
+    headerCount = 0
+    isFirstTable = True
+    """item name"""
+    itemname = paragraphs.rows[5].cells[1].text
     tree = magictree()
     hierarchy = None
     for row in paragraphs.rows:
         if row.cells[0].text.find("Наименование работы") != -1:
             """merge header"""
             mergecells(paragraphsCopy.rows[row._index])
-
             startrow = row._index + 1
             """clearing the paragrapg table"""
             for inx in range(startrow, len(paragraphs.rows)):
@@ -251,6 +290,10 @@ def splitWordFile(filePath):
                 == row.cells[9].text == row.cells[11].text):
             """searching a header if exists"""
             hierarchy = tree.add(paragraphs.rows[row._index])
+            """define the header for a conclusion"""
+            if headerCount == 1:
+                secheaderrow = row.cells[0].text
+            headerCount += 1
         elif (startrow != 0) and (row._index >= startrow):
             if hierarchy is not None:
                 hierarchy.add(paragraphs.rows[row._index])
@@ -265,13 +308,15 @@ def splitWordFile(filePath):
             currentrow = rowlower.attr[0]
             """name for new file(the protocol number"""
             wordname = currentrow.cells[11].text
+            """items count"""
+            text_count = currentrow.cells[8].text
             """rename protocol string"""
             replacetext(paragraphsCopy.rows[1].cells[6].paragraphs, newstring=currentrow.cells[11].text,
                         instantreplace=True)
             """paragraph name"""
             paragraphname = currentrow.cells[0].text
             """merge row"""
-            mergecells(currentrow)
+            # mergecells(currentrow)
             newrow._element.getparent().replace(newrow._element, currentrow._element)
             newrow = currentrow
 
@@ -308,14 +353,45 @@ def splitWordFile(filePath):
                 word.tables[1]._element.getparent().replace(word.tables[1]._element, equipmenttoedit._element)
 
             word.tables[0]._element.getparent().replace(word.tables[0]._element, paragraphsCopy._element)
+            """creating conclusion"""
+            conclusion = findparagraph(word.paragraphs, ["Партия изделий", "Выборка в количестве"],
+                                       rangeList=range(6, len(word.paragraphs)))
+
+            if isFirstTable:
+                conclusion_text = f"Партия изделий {itemname} в количестве {text_count} " \
+                                  f"шт. прошла входной контроль с положительным результатом."
+            else:
+                conclusion_text = f"Выборка в количестве {text_count} шт. из партии изделий {itemname} " \
+                                  f"прошла сертификационные испытания с положительным результатом."
+            replaceparagraph(conclusion, conclusion_text)
+
+            # for doc_prg in range(6, len(word.paragraphs) - 1):
+            #     conclusion = word.paragraphs[doc_prg]
+            #     if conclusion.text.find("Партия изделий") != -1 or conclusion.text.find("Выборка в количестве") != -1:
+            #         if isFirstTable:
+            #             conclusion_text = f"Партия изделий {itemname} в количестве {text_count} " \
+            #                               f"шт. прошла входной контроль с положительным результатом."
+            #         else:
+            #             conclusion_text = f"Выборка в количестве {text_count} шт. из партии изделий {itemname} " \
+            #                               f"прошла сертификационные испытания с положительным результатом."
+            #         replaceparagraph(conclusion, conclusion_text)
+            #         break
+
+            """writing the WORD"""
             word.save(os.path.join(splitDir, f"{wordname}.docx"))
 
     for rowtree in tree.rows:
         if len(rowtree.rows) > 0:
             """groups"""
+            curr_group_raw = rowtree.attr[0]
+            """is this a first table"""
+            if isFirstTable:
+                if curr_group_raw.cells[0].text == secheaderrow:
+                    isFirstTable = False
+
             if rowheader is None:
                 rowheader = paragraphsCopy.add_row()
-            rowheader._element.getparent().replace(rowheader._element, rowtree.attr[0]._element)
+            rowheader._element.getparent().replace(rowheader._element, curr_group_raw._element)
             rowheader = rowtree.attr[0]
             """items"""
             outputitems(rowtree.rows)
