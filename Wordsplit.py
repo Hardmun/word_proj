@@ -124,7 +124,7 @@ def logDecorator(func):
 
     return wrapper
 
-# @logDecorator
+@logDecorator
 def getMappingTable(fileDir):
     pathtofile = os.path.join(fileDir, "mapping.xlsx")
     if not os.path.exists(pathtofile):
@@ -137,6 +137,7 @@ def getMappingTable(fileDir):
     vt.structure(mapping=[1, 2])
     return vt
 
+@logDecorator
 def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
     if instantreplace:
         firstloop = True
@@ -160,6 +161,7 @@ def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
                         text = inline[i].text.replace(oldstring, newstring)
                         inline[i].text = text
 
+@logDecorator
 def mergecells(row, first_merge, last_merge):
     textToDelete = row.cells[last_merge].paragraphs
     mrg = row.cells[first_merge].merge(row.cells[last_merge])
@@ -170,6 +172,7 @@ def mergecells(row, first_merge, last_merge):
                 paragraphtodelete.getparent().remove(paragraphtodelete)
                 paragraphtodelete._p = paragraphtodelete._element = None
 
+@logDecorator
 def findparagraph(paragraphs, desc_list, rangeList=None):
     if rangeList is None:
         rangeList = range(0, len(word.paragraphs))
@@ -183,11 +186,13 @@ def findparagraph(paragraphs, desc_list, rangeList=None):
 
     return None
 
+@logDecorator
 def deleteparagraph(paragraph):
     p = paragraph._element
     p.getparent().remove(p)
     p._p = p._element = None
 
+@logDecorator
 def replaceparagraph(paragraph, text=''):
     firstloop = True
     inline = paragraph.runs
@@ -199,6 +204,7 @@ def replaceparagraph(paragraph, text=''):
             text = ""
         inline[i].text = text
 
+@logDecorator
 def get_table_paragrapghs(table, text, row=None, cell=None, get_coordinates=False):
     if isinstance(row, tuple):
         row_range = range(row[0], row[1])
@@ -218,19 +224,19 @@ def get_table_paragrapghs(table, text, row=None, cell=None, get_coordinates=Fals
 
     return None
 
+@logDecorator
 def columns_to_merge(row, text, from_start=True):
     if from_start:
         sequence = range(0, len(row.cells))
     else:
-        sequence = range(len(row.cells)-1, 0, -1)
+        sequence = range(len(row.cells) - 1, 0, -1)
     for num in sequence:
-        if False not in [row.cells[num].text.lower().find(i) != -1 for i in text ]:
-                return num
+        if False not in [row.cells[num].text.lower().find(i) != -1 for i in text]:
+            return num
 
     return None
 
-
-# @logDecorator
+@logDecorator
 def splitWordFile(filePath):
     """refreshing the directory
     if directory Logs doesn't exist"""
@@ -274,12 +280,8 @@ def splitWordFile(filePath):
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
 
-
-
-
-
     """replace the word in the protocol and getting the row of protocol number"""
-    protocol_data = get_table_paragrapghs(paragraphsCopy, "Протокол сертификационных испытаний", cell=(0,5),
+    protocol_data = get_table_paragrapghs(paragraphsCopy, "Протокол сертификационных испытаний", cell=(0, 5),
                                           get_coordinates=True)
     if protocol_data is not None:
         replacetext(protocol_data[0].paragraphs, "сертификационных ", "")
@@ -288,7 +290,6 @@ def splitWordFile(filePath):
     protocol_name = get_table_paragrapghs(paragraphsCopy, "Тип изделия:", get_coordinates=True)
     if protocol_name is not None:
         global_var.update({"row_protocol_name": paragraphsCopy.rows[protocol_name[1][0]].cells[3].text})
-
 
     """deleting paragraphs"""
     smallstyle = word.styles.add_style("small", word.styles["Normal"].type)
@@ -308,7 +309,6 @@ def splitWordFile(filePath):
         newparagraph = word.add_paragraph(style=smallstyle)
         p_2._element.getparent().replace(p_2._element, newparagraph._element)
 
-
     """we need this variable to replace the table in the main file"""
     equipmentCopy = deepcopy(word.tables[1])
     rowtodelete = []
@@ -327,11 +327,10 @@ def splitWordFile(filePath):
             count_column = columns_to_merge(row, ("кол-во", "испытанных", "изделий"))
             global_var.update({"count_column": count_column})
             """merge header"""
-            first_merge = columns_to_merge(row,("соответствие","требованиям","пи"))
-            last_merge = columns_to_merge(row,("номер","протокола"), from_start=False)
-            global_var.update({"first_merge" : first_merge, "last_merge" : last_merge})
+            first_merge = columns_to_merge(row, ("соответствие", "требованиям", "пи"))
+            last_merge = columns_to_merge(row, ("номер", "протокола"), from_start=False)
+            global_var.update({"first_merge": first_merge, "last_merge": last_merge})
             mergecells(paragraphsCopy.rows[row._index], first_merge, last_merge)
-
 
             startrow = row._index + 1
             """clearing the paragrapg table"""
@@ -346,7 +345,7 @@ def splitWordFile(filePath):
             """searching a header if exists"""
             hierarchy = tree.add(paragraphs.rows[row._index])
             """define the header for a conclusion"""
-            if headerCount == 1:
+            if (headerCount == 1) or (row.cells[0].text.find("Сертификационные испытания") != -1):
                 secheaderrow = row.cells[0].text
             headerCount += 1
         elif (startrow != 0) and (row._index >= startrow):
@@ -372,7 +371,8 @@ def splitWordFile(filePath):
             """rename protocol string"""
             row_protocol_number = global_var.get("row_protocol_number")
             if row_protocol_number is not None:
-                replacetext(paragraphsCopy.rows[row_protocol_number].cells[8].paragraphs, newstring=currentrow.cells[11].text,
+                replacetext(paragraphsCopy.rows[row_protocol_number].cells[8].paragraphs,
+                            newstring=currentrow.cells[11].text,
                             instantreplace=True)
             """paragraph name"""
             paragraphname = currentrow.cells[0].text
@@ -419,7 +419,6 @@ def splitWordFile(filePath):
             word.tables[0]._element.getparent().replace(word.tables[0]._element, paragraphsCopy._element)
             """creating conclusion"""
 
-
             conclusion = findparagraph(word.paragraphs, ["партия изделий", "выборка в количестве"],
                                        rangeList=range(6, len(word.paragraphs)))
 
@@ -431,18 +430,6 @@ def splitWordFile(filePath):
                 conclusion_text = f"Выборка в количестве {text_count} шт. из партии изделий {itemname} " \
                                   f"прошла сертификационные испытания с положительным результатом."
             replaceparagraph(conclusion, conclusion_text)
-
-            # for doc_prg in range(6, len(word.paragraphs) - 1):
-            #     conclusion = word.paragraphs[doc_prg]
-            #     if conclusion.text.find("Партия изделий") != -1 or conclusion.text.find("Выборка в количестве") != -1:
-            #         if isFirstTable:
-            #             conclusion_text = f"Партия изделий {itemname} в количестве {text_count} " \
-            #                               f"шт. прошла входной контроль с положительным результатом."
-            #         else:
-            #             conclusion_text = f"Выборка в количестве {text_count} шт. из партии изделий {itemname} " \
-            #                               f"прошла сертификационные испытания с положительным результатом."
-            #         replaceparagraph(conclusion, conclusion_text)
-            #         break
 
             """writing the WORD"""
             word.save(os.path.join(splitDir, f"{wordname}.docx"))
@@ -506,7 +493,7 @@ def docToDocx(filePath):
     return isConverted
 
 class WordHandler(FileSystemEventHandler):
-    # @logDecorator
+    @logDecorator
     def on_created(self, event):
         """path to file"""
         file = event.src_path
@@ -537,7 +524,7 @@ class IniHandler(FileSystemEventHandler):
         super().__init__()
         self.obs = None
 
-    # @logDecorator
+    @logDecorator
     def on_modified(self, event):
         if event.src_path.find("settings.ini") != -1:
             config.read(os.path.join(projectDir, "settings.ini"))
@@ -603,10 +590,9 @@ class winService(win32serviceutil.ServiceFramework):
         obsDirectory(self)
 
 if __name__ == '__main__':
-    obsDirectory()
-    # if len(sys.argv) == 1:
-    #     servicemanager.Initialize()
-    #     servicemanager.PrepareToHostSingle(winService)
-    #     servicemanager.StartServiceCtrlDispatcher()
-    # else:
-    #     win32serviceutil.HandleCommandLine(winService)
+    if len(sys.argv) == 1:
+        servicemanager.Initialize()
+        servicemanager.PrepareToHostSingle(winService)
+        servicemanager.StartServiceCtrlDispatcher()
+    else:
+        win32serviceutil.HandleCommandLine(winService)
