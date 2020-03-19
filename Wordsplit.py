@@ -160,9 +160,9 @@ def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
                         text = inline[i].text.replace(oldstring, newstring)
                         inline[i].text = text
 
-def mergecells(row):
-    textToDelete = row.cells[13].paragraphs
-    mrg = row.cells[9].merge(row.cells[13])
+def mergecells(row, first_merge, last_merge):
+    textToDelete = row.cells[last_merge].paragraphs
+    mrg = row.cells[first_merge].merge(row.cells[last_merge])
     for prg in mrg.paragraphs:
         for prg_tmp in textToDelete:
             if prg.text.find(prg_tmp.text) != -1:
@@ -174,14 +174,14 @@ def findparagraph(paragraphs, desc_list, rangeList=None):
     if rangeList is None:
         rangeList = range(0, len(word.paragraphs))
 
-    conclusionResult = None
+    # conclusionResult = None
     for desc in desc_list:
         for doc_prg in rangeList:
             conclusion = paragraphs[doc_prg]
-            if conclusion.text.find(desc) != -1:
-                conclusionResult = conclusion
+            if conclusion.text.lower().find(desc) != -1:
+                return conclusion
 
-    return conclusionResult
+    return None
 
 def deleteparagraph(paragraph):
     p = paragraph._element
@@ -199,11 +199,45 @@ def replaceparagraph(paragraph, text=''):
             text = ""
         inline[i].text = text
 
+def get_table_paragrapghs(table, text, row=None, cell=None, get_coordinates=False):
+    if isinstance(row, tuple):
+        row_range = range(row[0], row[1])
+    else:
+        row_range = range(0, len(table.rows))
+
+    if isinstance(cell, tuple):
+        cell_range = range(cell[0], cell[1])
+    else:
+        cell_range = range(0, len(table.columns))
+
+    for curr_row in row_range:
+        for curr_cell in cell_range:
+            curr_value = table.rows[curr_row].cells[curr_cell]
+            if curr_value.text.find(text) != -1:
+                return (curr_value, (curr_row, curr_cell)) if get_coordinates else curr_value
+
+    return None
+
+def columns_to_merge(row, text, from_start=True):
+    if from_start:
+        sequence = range(0, len(row.cells))
+    else:
+        sequence = range(len(row.cells)-1, 0, -1)
+    for num in sequence:
+        if False not in [row.cells[num].text.lower().find(i) != -1 for i in text ]:
+                return num
+
+    return None
+
+
 # @logDecorator
 def splitWordFile(filePath):
     """refreshing the directory
     if directory Logs doesn't exist"""
     fileDir = os.path.dirname(filePath)
+    """global variables as dictionary"""
+    global global_var
+    global_var = {}
     """getting mapping table"""
     mappingTable = getMappingTable(fileDir)
     splitDir = os.path.join(fileDir, os.path.splitext(filePath)[0])
@@ -239,18 +273,34 @@ def splitWordFile(filePath):
 
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
-    """deleting paragraphs"""
 
+
+
+
+
+    """replace the word in the protocol and getting the row of protocol number"""
+    protocol_data = get_table_paragrapghs(paragraphsCopy, "Протокол сертификационных испытаний", cell=(0,5),
+                                          get_coordinates=True)
+    if protocol_data is not None:
+        replacetext(protocol_data[0].paragraphs, "сертификационных ", "")
+        global_var.update({"row_protocol_number": protocol_data[1][0]})
+    """item name"""
+    protocol_name = get_table_paragrapghs(paragraphsCopy, "Тип изделия:", get_coordinates=True)
+    if protocol_name is not None:
+        global_var.update({"row_protocol_name": paragraphsCopy.rows[protocol_name[1][0]].cells[3].text})
+
+
+    """deleting paragraphs"""
     smallstyle = word.styles.add_style("small", word.styles["Normal"].type)
     font = smallstyle.font
     font.size = 88900
 
-    p_1 = findparagraph(word.paragraphs, ["Результаты измерений параметров изделий"],
+    p_1 = findparagraph(word.paragraphs, ["результаты измерений параметров изделий"],
                         range(4, len(word.paragraphs)))
     if p_1 is not None:
         newparagraph = word.add_paragraph(style=smallstyle)
         p_1._element.getparent().replace(p_1._element, newparagraph._element)
-    p_2 = findparagraph(word.paragraphs, ["Данные протокола могут быть воспроизведены"],
+    p_2 = findparagraph(word.paragraphs, ["данные протокола могут быть воспроизведены"],
                         range(4, len(word.paragraphs)))
     if p_1 is not None and p_2 is not None:
         deleteparagraph(p_2)
@@ -258,8 +308,7 @@ def splitWordFile(filePath):
         newparagraph = word.add_paragraph(style=smallstyle)
         p_2._element.getparent().replace(p_2._element, newparagraph._element)
 
-    """replace name in header"""
-    replacetext(paragraphsCopy.rows[1].cells[0].paragraphs, "сертификационных ", "")
+
     """we need this variable to replace the table in the main file"""
     equipmentCopy = deepcopy(word.tables[1])
     rowtodelete = []
@@ -270,14 +319,20 @@ def splitWordFile(filePath):
     secheaderrow = None
     headerCount = 0
     isFirstTable = True
-    """item name"""
-    itemname = paragraphs.rows[5].cells[1].text
     tree = magictree()
     hierarchy = None
     for row in paragraphs.rows:
         if row.cells[0].text.find("Наименование работы") != -1:
+            """getting the count column"""
+            count_column = columns_to_merge(row, ("кол-во", "испытанных", "изделий"))
+            global_var.update({"count_column": count_column})
             """merge header"""
-            mergecells(paragraphsCopy.rows[row._index])
+            first_merge = columns_to_merge(row,("соответствие","требованиям","пи"))
+            last_merge = columns_to_merge(row,("номер","протокола"), from_start=False)
+            global_var.update({"first_merge" : first_merge, "last_merge" : last_merge})
+            mergecells(paragraphsCopy.rows[row._index], first_merge, last_merge)
+
+
             startrow = row._index + 1
             """clearing the paragrapg table"""
             for inx in range(startrow, len(paragraphs.rows)):
@@ -309,14 +364,23 @@ def splitWordFile(filePath):
             """name for new file(the protocol number"""
             wordname = currentrow.cells[11].text
             """items count"""
-            text_count = currentrow.cells[8].text
+            count_column = global_var.get("count_column")
+            if count_column is None:
+                text_count = ""
+            else:
+                text_count = currentrow.cells[count_column].text
             """rename protocol string"""
-            replacetext(paragraphsCopy.rows[1].cells[6].paragraphs, newstring=currentrow.cells[11].text,
-                        instantreplace=True)
+            row_protocol_number = global_var.get("row_protocol_number")
+            if row_protocol_number is not None:
+                replacetext(paragraphsCopy.rows[row_protocol_number].cells[8].paragraphs, newstring=currentrow.cells[11].text,
+                            instantreplace=True)
             """paragraph name"""
             paragraphname = currentrow.cells[0].text
             """merge row"""
-            # mergecells(currentrow)
+            first_merge = global_var.get("first_merge")
+            last_merge = global_var.get("last_merge")
+            if not (first_merge is None or last_merge is None):
+                mergecells(currentrow, first_merge, last_merge)
             newrow._element.getparent().replace(newrow._element, currentrow._element)
             newrow = currentrow
 
@@ -354,9 +418,12 @@ def splitWordFile(filePath):
 
             word.tables[0]._element.getparent().replace(word.tables[0]._element, paragraphsCopy._element)
             """creating conclusion"""
-            conclusion = findparagraph(word.paragraphs, ["Партия изделий", "Выборка в количестве"],
+
+
+            conclusion = findparagraph(word.paragraphs, ["партия изделий", "выборка в количестве"],
                                        rangeList=range(6, len(word.paragraphs)))
 
+            itemname = global_var.get("row_protocol_name")
             if isFirstTable:
                 conclusion_text = f"Партия изделий {itemname} в количестве {text_count} " \
                                   f"шт. прошла входной контроль с положительным результатом."
