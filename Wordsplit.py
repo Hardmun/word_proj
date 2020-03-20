@@ -525,9 +525,12 @@ class WordHandler(FileSystemEventHandler):
                     # loggerInfo.info(f"The file r'{os.path.basename(file)}' was successfully converted to "
                     #                 f"{os.path.basename(newFile)}")
                     splitCompleted = splitWordFile(newFile)
+                    with open("c:/123.txt", "w") as txt:
+                        write("doc", txt)
             elif file.endswith(".docx"):
                 splitCompleted = splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
-
+                with open("c:/12345.txt", "w") as txt:
+                    write("docx", txt)
             if splitCompleted:
                 loggerInfo.info("The WORD file has been split successfully.")
 
@@ -595,9 +598,10 @@ class winService(win32serviceutil.ServiceFramework):
         obsDirectory(self)
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(winService)
-        servicemanager.StartServiceCtrlDispatcher()
-    else:
-        win32serviceutil.HandleCommandLine(winService)
+    obsDirectory()
+    # if len(sys.argv) == 1:
+    #     servicemanager.Initialize()
+    #     servicemanager.PrepareToHostSingle(winService)
+    #     servicemanager.StartServiceCtrlDispatcher()
+    # else:
+    #     win32serviceutil.HandleCommandLine(winService)
