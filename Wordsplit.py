@@ -17,6 +17,9 @@ import win32event
 import win32service
 import win32serviceutil
 
+from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import freeze_support
+
 """global path"""
 projectDir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(
     os.path.abspath(__file__))
@@ -508,6 +511,19 @@ def getObserveDirectory():
 
     return obsDir
 
+def do_job(fileDir, file, isDocEnd, isDocxEnd):
+    splitCompleted = False
+    if isDocEnd:
+        newFile = docToDocx(os.path.normpath(os.path.join(fileDir, file)))
+        if newFile:
+            # loggerInfo.info(f"The file r'{os.path.basename(file)}' was successfully converted to "
+            #                 f"{os.path.basename(newFile)}")
+            splitCompleted = splitWordFile(newFile)
+    elif isDocxEnd:
+        splitCompleted = splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
+    if splitCompleted:
+        loggerInfo.info("The WORD file has been split successfully.")
+
 class WordHandler(FileSystemEventHandler):
     @logDecorator
     def on_created(self, event):
@@ -516,23 +532,16 @@ class WordHandler(FileSystemEventHandler):
         fileDir = os.path.dirname(file)
         """converting *.doc into *.docx"""
         if file.find("~$") == -1:
+            isDocEnd = file.endswith(".doc")
+            isDocxEnd = file.endswith(".docx")
             """deleting message.txt"""
-            if file.endswith(".docx") or file.endswith(".doc"):
+            if isDocEnd or isDocxEnd:
                 msgPath = os.path.join(fileDir, "message.txt")
                 if os.path.exists(msgPath):
                     os.unlink(msgPath)
 
-            splitCompleted = False
-            if file.endswith(".doc"):
-                newFile = docToDocx(os.path.normpath(os.path.join(fileDir, file)))
-                if newFile:
-                    # loggerInfo.info(f"The file r'{os.path.basename(file)}' was successfully converted to "
-                    #                 f"{os.path.basename(newFile)}")
-                    splitCompleted = splitWordFile(newFile)
-            elif file.endswith(".docx"):
-                splitCompleted = splitWordFile(os.path.normpath(os.path.join(fileDir, file)))
-            if splitCompleted:
-                loggerInfo.info("The WORD file has been split successfully.")
+                with ProcessPoolExecutor() as executor:
+                    executor.submit(do_job, fileDir=fileDir, file=file, isDocEnd=isDocEnd, isDocxEnd=isDocxEnd)
 
 class IniHandler(FileSystemEventHandler):
     def __init__(self):
@@ -598,9 +607,11 @@ class winService(win32serviceutil.ServiceFramework):
         obsDirectory(self)
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(winService)
-        servicemanager.StartServiceCtrlDispatcher()
-    else:
-        win32serviceutil.HandleCommandLine(winService)
+    freeze_support()
+    obsDirectory()
+    # if len(sys.argv) == 1:
+    #     servicemanager.Initialize()
+    #     servicemanager.PrepareToHostSingle(winService)
+    #     servicemanager.StartServiceCtrlDispatcher()
+    # else:
+    #     win32serviceutil.HandleCommandLine(winService)
