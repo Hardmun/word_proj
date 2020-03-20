@@ -540,8 +540,9 @@ class IniHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path.find("settings.ini") != -1:
             obsr = self.obs
+            config.read(os.path.join(projectDir, "settings.ini"))
             newPath = getObserveDirectory()
-            obsr.schedule(WordHandler(), path=os.path.normpath(newPath))
+            obsr.schedule(WordHandler(), path=newPath)
             loggerInfo.info(f'The directory has been changed to {newPath}')
 
 def obsDirectory(self=None):
