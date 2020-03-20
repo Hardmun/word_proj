@@ -492,6 +492,18 @@ def docToDocx(filePath):
     wrd.Quit()
     return isConverted
 
+def getObserveDirectory():
+    """if a observe directory doesn't exists, creating"""
+    obsDir = os.path.normpath(config.get("DEFAULT", "Path"))
+    if not os.path.isdir(obsDir):
+        try:
+            os.mkdir(obsDir)
+        except waitexception_1:
+            loggerError.exception(f"An error has been occurred creating the dir: {obsDir}")
+            obsDir = os.path.normpath("c:/")
+
+    return obsDir
+
 class WordHandler(FileSystemEventHandler):
     @logDecorator
     def on_created(self, event):
@@ -527,22 +539,14 @@ class IniHandler(FileSystemEventHandler):
     @logDecorator
     def on_modified(self, event):
         if event.src_path.find("settings.ini") != -1:
-            config.read(os.path.join(projectDir, "settings.ini"))
             obsr = self.obs
-            newPath = config.get("DEFAULT", "Path")
+            newPath = getObserveDirectory()
             obsr.schedule(WordHandler(), path=os.path.normpath(newPath))
             loggerInfo.info(f'The directory has been changed to {newPath}')
 
 def obsDirectory(self=None):
     observer = Observer()
-    """if a observe directory doesn't exists, creating"""
-    obsDir = os.path.normpath(config.get("DEFAULT", "Path"))
-    if not os.path.isdir(obsDir):
-        try:
-            os.mkdir(obsDir)
-        except waitexception_1:
-            loggerError.exception(f"An error has been occurred creating the dir: {obsDir}")
-            obsDir = os.path.normpath("c:/")
+    obsDir = getObserveDirectory()
     observer.schedule(WordHandler(), path=obsDir)
     observer.start()
     """if settings.ini was changed"""
