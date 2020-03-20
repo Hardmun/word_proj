@@ -292,9 +292,12 @@ def splitWordFile(filePath):
         global_var.update({"row_protocol_name": paragraphsCopy.rows[protocol_name[1][0]].cells[3].text})
 
     """deleting paragraphs"""
-    smallstyle = word.styles.add_style("small", word.styles["Normal"].type)
-    font = smallstyle.font
-    font.size = 88900
+    if 'small_' in [i.name_val for i in word.styles._element.style_lst]:
+        smallstyle = word.styles['small_']
+    else:
+        smallstyle = word.styles.add_style("small_", word.styles["Normal"].type)
+        font = smallstyle.font
+        font.size = 88900
 
     p_1 = findparagraph(word.paragraphs, ["результаты измерений параметров изделий"],
                         range(4, len(word.paragraphs)))
@@ -330,7 +333,8 @@ def splitWordFile(filePath):
             first_merge = columns_to_merge(row, ("соответствие", "требованиям", "пи"))
             last_merge = columns_to_merge(row, ("номер", "протокола"), from_start=False)
             global_var.update({"first_merge": first_merge, "last_merge": last_merge})
-            mergecells(paragraphsCopy.rows[row._index], first_merge, last_merge)
+            if not (first_merge is None or last_merge is None):
+                mergecells(paragraphsCopy.rows[row._index], first_merge, last_merge)
 
             startrow = row._index + 1
             """clearing the paragrapg table"""
