@@ -43,13 +43,12 @@ FileName: "{app}\settings.ini"; Section: "DEFAULT"; Key: "path"; String: "{code:
 Name: "{app}"; Flags: uninsalwaysuninstall
 
 [run]
-Filename: {sys}\sc.exe; Parameters: "create Wordsplit start=auto binPath= ""{app}\Wordsplit.exe"" displayname=""Word split""" ; Flags: runhidden
-Filename: {sys}\sc.exe; Parameters: "description Wordsplit ""Word split application""" ; Flags: runhidden
-Filename: {sys}\sc.exe; Parameters: "start Wordsplit" ; Flags: runhidden
+Filename: {app}\Wordsplit.exe; Parameters: "install"; Flags: runhidden
+Filename: {app}\Wordsplit.exe; Parameters: "start"; Flags: runhidden
 
 [UninstallRun]
-Filename: {sys}\sc.exe; Parameters: "stop Wordsplit" ; Flags: runhidden
-Filename: {sys}\sc.exe; Parameters: "delete Wordsplit" ; Flags: runhidden
+Filename: {app}\Wordsplit.exe; Parameters: "stop"; Flags: runhidden
+Filename: {app}\Wordsplit.exe; Parameters: "remove"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\unnecessary_files"
