@@ -545,7 +545,7 @@ class WordHandler(FileSystemEventHandler):
                 if os.path.exists(msgPath):
                     os.unlink(msgPath)
 
-                with ProcessPoolExecutor(1) as executor:
+                with ProcessPoolExecutor() as executor:
                     executor.submit(do_job, fileDir=fileDir, file=file, isDocEnd=isDocEnd, isDocxEnd=isDocxEnd)
 
 class IniHandler(FileSystemEventHandler):
