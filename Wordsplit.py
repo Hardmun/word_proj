@@ -608,7 +608,6 @@ class winService(win32serviceutil.ServiceFramework):
             self.main()
             rc = win32event.WaitForSingleObject(self.hWaitStop, 5000)
 
-
     def main(self):
         obsDirectory(self)
 
