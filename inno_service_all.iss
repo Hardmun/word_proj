@@ -43,7 +43,7 @@ FileName: "{app}\settings.ini"; Section: "DEFAULT"; Key: "path"; String: "{code:
 Name: "{app}"; Flags: uninsalwaysuninstall
 
 [run]
-Filename: {app}\Wordsplit.exe; Parameters: "install"; Flags: runhidden
+Filename: {app}\Wordsplit.exe; Parameters: "--startup auto install"; Flags: runhidden
 Filename: {app}\Wordsplit.exe; Parameters: "start"; Flags: runhidden
 
 [UninstallRun]
