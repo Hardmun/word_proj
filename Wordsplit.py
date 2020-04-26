@@ -241,6 +241,54 @@ def columns_to_merge(row, text, from_start=True):
 
     return None
 
+def rebuildColumns(row=None, row_copy=None, global_vrb=None, isHeader=False):
+    merge_start = None
+    value_3 = None
+    merge_end = None
+    value_4_column = None
+    value_4 = None
+    value_5_column = None
+
+    if isHeader:
+        first_col = columns_to_merge(row, ("наименование", "работы"))
+        last_col = columns_to_merge(row, ("номер", "протокола"), from_start=False)
+        clm_text = ""
+        clm_num = 0
+
+        for clm in range(first_col, last_col + 1):
+            if clm_text != row.cells[clm].text:
+                clm_text = row.cells[clm].text
+                clm_num += 1
+                if clm_num == 2:
+                    merge_start = clm
+                    global_vrb.update({"merge_start": clm})
+                elif clm_num == 3:
+                    value_3 = clm_text
+                    global_vrb.update({"value_3_column": clm})
+                elif clm_num == 4:
+                    merge_end = clm - 1
+                    value_4 = clm_text
+                    value_4_column = clm
+                    global_vrb.update({"merge_end": merge_end})
+                    global_vrb.update({"value_4_column": clm})
+                elif clm_num == 5:
+                    value_5_column = clm
+                    global_vrb.update({"value_5_column": clm})
+    else:
+        merge_start = global_vrb.get("merge_start")
+        value_3 = row_copy.cells[global_vrb.get("value_3_column")].text
+        merge_end = global_vrb.get("merge_end")
+        value_4_column = global_vrb.get("value_4_column")
+        value_4 = row_copy.cells[value_4_column].text
+        value_5_column = global_vrb.get("value_5_column")
+
+    if not (not merge_start or not merge_end):
+        mergecells(row_copy, merge_start, merge_end)
+    if not (not value_4_column or not value_3):
+        replacetext(row_copy.cells[value_4_column].paragraphs, newstring=value_3, instantreplace=True)
+    if not (not value_5_column or not value_4):
+        replacetext(row_copy.cells[value_5_column].paragraphs, newstring=value_4, instantreplace=True)
+
 # @logDecorator
 def splitWordFile(filePath):
     """refreshing the directory
@@ -345,14 +393,14 @@ def splitWordFile(filePath):
             count_column = columns_to_merge(row, ("кол-во", "испытанных", "изделий"))
             global_var.update({"count_column": count_column})
 
-            """merge header"""
-            first_merge = columns_to_merge(row, ("соответствие", "требованиям", "пи"))
-            last_merge = columns_to_merge(row, ("номер", "протокола"), from_start=False)
-            global_var.update({"first_merge": first_merge, "last_merge": last_merge})
+            # """merge header"""
+            # first_merge = columns_to_merge(row, ("соответствие", "требованиям", "пи"))
+            # last_merge = columns_to_merge(row, ("номер", "протокола"), from_start=False)
+            # global_var.update({"first_merge": first_merge, "last_merge": last_merge})
             # if not (first_merge is None or last_merge is None):
             #     mergecells(paragraphsCopy.rows[row._index], first_merge, last_merge)
-
-
+            """moving column's values to the right"""
+            rebuildColumns(row=row, row_copy=paragraphsCopy.rows[row._index], global_vrb=global_var, isHeader=True)
 
             startrow = row._index + 1
             """clearing the paragrapg table"""
@@ -398,11 +446,8 @@ def splitWordFile(filePath):
                             instantreplace=True)
             """paragraph name"""
             paragraphname = currentrow.cells[0].text
-            """merge row"""
-            first_merge = global_var.get("first_merge")
-            last_merge = global_var.get("last_merge")
-            if not (first_merge is None or last_merge is None):
-                mergecells(currentrow, first_merge, last_merge)
+            """moving column's values to the right"""
+            rebuildColumns(row_copy=currentrow, global_vrb=global_var)
 
             newrow._element.getparent().replace(newrow._element, currentrow._element)
             newrow = currentrow
