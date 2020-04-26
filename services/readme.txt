@@ -22,3 +22,9 @@ of user that is currently logged on.
 
 4) for 32 version WORD console is C:\WINDOWS\SysWOW64\mmc comexp.msc /32
 
+5) imports
+pip install python-docx xlrd watchdog servicemanager pypiwin32
+
+6) current remarks
+a) cancel executor
+b) cancel service

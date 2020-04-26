@@ -128,7 +128,7 @@ def logDecorator(func):
 
     return wrapper
 
-@logDecorator
+# @logDecorator
 def getMappingTable(fileDir):
     pathtofile = os.path.join(fileDir, "mapping.xlsx")
     if not os.path.exists(pathtofile):
@@ -141,7 +141,7 @@ def getMappingTable(fileDir):
     vt.structure(mapping=[1, 2])
     return vt
 
-@logDecorator
+# @logDecorator
 def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
     if instantreplace:
         firstloop = True
@@ -165,7 +165,7 @@ def replacetext(paragraphs, oldstring='', newstring='', instantreplace=False):
                         text = inline[i].text.replace(oldstring, newstring)
                         inline[i].text = text
 
-@logDecorator
+# @logDecorator
 def mergecells(row, first_merge, last_merge):
     textToDelete = row.cells[last_merge].paragraphs
     mrg = row.cells[first_merge].merge(row.cells[last_merge])
@@ -178,12 +178,11 @@ def mergecells(row, first_merge, last_merge):
 
     return mrg
 
-@logDecorator
+# @logDecorator
 def findparagraph(paragraphs, desc_list, rangeList=None):
     if rangeList is None:
         rangeList = range(0, len(word.paragraphs))
 
-    # conclusionResult = None
     for desc in desc_list:
         for doc_prg in rangeList:
             conclusion = paragraphs[doc_prg]
@@ -192,13 +191,13 @@ def findparagraph(paragraphs, desc_list, rangeList=None):
 
     return None
 
-@logDecorator
+# @logDecorator
 def deleteparagraph(paragraph):
     p = paragraph._element
     p.getparent().remove(p)
     p._p = p._element = None
 
-@logDecorator
+# @logDecorator
 def replaceparagraph(paragraph, text=''):
     firstloop = True
     inline = paragraph.runs
@@ -210,7 +209,7 @@ def replaceparagraph(paragraph, text=''):
             text = ""
         inline[i].text = text
 
-@logDecorator
+# @logDecorator
 def get_table_paragrapghs(table, text, row=None, cell=None, get_coordinates=False):
     if isinstance(row, tuple):
         row_range = range(row[0], row[1])
@@ -230,7 +229,7 @@ def get_table_paragrapghs(table, text, row=None, cell=None, get_coordinates=Fals
 
     return None
 
-@logDecorator
+# @logDecorator
 def columns_to_merge(row, text, from_start=True):
     if from_start:
         sequence = range(0, len(row.cells))
@@ -242,7 +241,7 @@ def columns_to_merge(row, text, from_start=True):
 
     return None
 
-@logDecorator
+# @logDecorator
 def splitWordFile(filePath):
     """refreshing the directory
     if directory Logs doesn't exist"""
@@ -282,6 +281,16 @@ def splitWordFile(filePath):
         loggerError.exception(f"An error occurred while reading file: word = Document({filePath})")
         messageFile(["Ошибка чтения WORD.", str(errMsg), filePath], fileDir)
         return False
+
+    """removing empty rows at the end of file"""
+    prg_to_del = []
+    for curr_par in range(9, len(word.paragraphs)):
+        prg_obj = word.paragraphs[curr_par]
+        if not prg_obj.text:
+            prg_to_del.append(prg_obj)
+
+    for curr_par in prg_to_del:
+        deleteparagraph(curr_par)
 
     paragraphs = word.tables[0]
     paragraphsCopy = deepcopy(paragraphs)
@@ -335,12 +344,15 @@ def splitWordFile(filePath):
             """getting the count column"""
             count_column = columns_to_merge(row, ("кол-во", "испытанных", "изделий"))
             global_var.update({"count_column": count_column})
+
             """merge header"""
             first_merge = columns_to_merge(row, ("соответствие", "требованиям", "пи"))
             last_merge = columns_to_merge(row, ("номер", "протокола"), from_start=False)
             global_var.update({"first_merge": first_merge, "last_merge": last_merge})
-            if not (first_merge is None or last_merge is None):
-                mergecells(paragraphsCopy.rows[row._index], first_merge, last_merge)
+            # if not (first_merge is None or last_merge is None):
+            #     mergecells(paragraphsCopy.rows[row._index], first_merge, last_merge)
+
+
 
             startrow = row._index + 1
             """clearing the paragrapg table"""
@@ -431,7 +443,6 @@ def splitWordFile(filePath):
                 word.tables[1]._element.getparent().replace(word.tables[1]._element, equipmenttoedit._element)
 
             """creating conclusion"""
-
             conclusion = findparagraph(word.paragraphs, ["партия изделий", "выборка в количестве"],
                                        rangeList=range(6, len(word.paragraphs)))
 
@@ -468,12 +479,12 @@ def splitWordFile(filePath):
 
     return True
 
-@logDecorator
+# @logDecorator
 def messageFile(txtList, msgDir):
     with open(os.path.join(msgDir, "message.txt"), "w", encoding="utf-8") as file:
         file.write("\n".join(txtList))
 
-@logDecorator
+# @logDecorator
 def docToDocx(filePath):
     import pythoncom
     from win32com import client
@@ -530,7 +541,7 @@ def do_job(fileDir, file, isDocEnd, isDocxEnd):
         loggerInfo.info("The WORD file has been split successfully.")
 
 class WordHandler(FileSystemEventHandler):
-    @logDecorator
+    # @logDecorator
     def on_created(self, event):
         """path to file"""
         file = event.src_path
@@ -545,15 +556,16 @@ class WordHandler(FileSystemEventHandler):
                 if os.path.exists(msgPath):
                     os.unlink(msgPath)
 
-                with ProcessPoolExecutor() as executor:
-                    executor.submit(do_job, fileDir=fileDir, file=file, isDocEnd=isDocEnd, isDocxEnd=isDocxEnd)
+                do_job(fileDir=fileDir, file=file, isDocEnd=isDocEnd, isDocxEnd=isDocxEnd)
+                # with ProcessPoolExecutor() as executor:
+                #     executor.submit(do_job, fileDir=fileDir, file=file, isDocEnd=isDocEnd, isDocxEnd=isDocxEnd)
 
 class IniHandler(FileSystemEventHandler):
     def __init__(self):
         super().__init__()
         self.obs = None
 
-    @logDecorator
+    # @logDecorator
     def on_modified(self, event):
         if event.src_path.find("settings.ini") != -1:
             obsr = self.obs
@@ -612,10 +624,12 @@ class winService(win32serviceutil.ServiceFramework):
         obsDirectory(self)
 
 if __name__ == '__main__':
-    freeze_support()
-    if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(winService)
-        servicemanager.StartServiceCtrlDispatcher()
-    else:
-        win32serviceutil.HandleCommandLine(winService)
+    obsDirectory()
+
+    # freeze_support()
+    # if len(sys.argv) == 1:
+    #     servicemanager.Initialize()
+    #     servicemanager.PrepareToHostSingle(winService)
+    #     servicemanager.StartServiceCtrlDispatcher()
+    # else:
+    #     win32serviceutil.HandleCommandLine(winService)
