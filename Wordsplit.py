@@ -256,6 +256,12 @@ def rebuildColumns(row=None, row_copy=None, global_vrb=None, isHeader=False):
         clm_text = ""
         clm_num = 0
 
+        if first_col is None or last_col is None:
+            global_vrb.update({"needToRebuild": False})
+            return None
+        else:
+            global_vrb.update({"needToRebuild": True})
+
         for clm in range(first_col, last_col + 1):
             if clm_text != row.cells[clm].text:
                 clm_text = row.cells[clm].text
@@ -448,7 +454,8 @@ def splitWordFile(filePath):
             """paragraph name"""
             paragraphname = currentrow.cells[0].text
             """moving column's values to the right"""
-            rebuildColumns(row_copy=currentrow, global_vrb=global_var)
+            if global_var.get("needToRebuild"):
+                rebuildColumns(row_copy=currentrow, global_vrb=global_var)
 
             newrow._element.getparent().replace(newrow._element, currentrow._element)
             newrow = currentrow
