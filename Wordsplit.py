@@ -677,6 +677,7 @@ class winService(win32serviceutil.ServiceFramework):
         obsDirectory(self)
 
 if __name__ == '__main__':
+    #1
     freeze_support()
     if len(sys.argv) == 1:
         servicemanager.Initialize()
