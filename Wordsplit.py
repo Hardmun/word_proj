@@ -171,7 +171,8 @@ def mergecells(row, first_merge, last_merge):
     mrg = row.cells[first_merge].merge(row.cells[last_merge])
     for prg in mrg.paragraphs:
         for prg_tmp in textToDelete:
-            if prg.text.find(prg_tmp.text) != -1:
+            # if prg.text.find(prg_tmp.text) != -1:
+            if prg.text == prg_tmp.text:
                 paragraphtodelete = prg._element
                 paragraphtodelete.getparent().remove(paragraphtodelete)
                 paragraphtodelete._p = paragraphtodelete._element = None
