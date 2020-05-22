@@ -25,6 +25,3 @@ of user that is currently logged on.
 5) imports
 pip install python-docx xlrd watchdog servicemanager pypiwin32
 
-6) current remarks
-a) cancel executor
-b) cancel service
